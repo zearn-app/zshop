@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useApp } from "../app"; // adjust path if needed
+import { useApp } from "./app"; // adjust path if needed
 
 const LandingPage: React.FC = () => {
   const { goToLogin } = useApp(); // ✅ use your central router
