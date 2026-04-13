@@ -94,4 +94,4 @@ const LandingPage: React.FC = () => {
   );
 };
 
-export default Page;
+export default page;
