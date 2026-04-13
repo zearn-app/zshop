@@ -5,6 +5,10 @@ import React from "react";
 import React from "react";
 import { useRouter } from "next/navigation";
 
+
+const router = useRouter();
+
+
 const LandingPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-gray-800 text-white">
