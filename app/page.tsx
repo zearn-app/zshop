@@ -1,34 +1,53 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { db } from "../src/lib/firebase";
+import { collection, getDocs } from "firebase/firestore";
+
 export default function Home() {
-  const products = [
-    { name: "iPhone 13", amazon: 52000, flipkart: 51000 },
-    { name: "Samsung S21", amazon: 45000, flipkart: 43000 }
-  ];
+  const [products, setProducts] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function fetchProducts() {
+      const querySnapshot = await getDocs(collection(db, "products"));
+
+      const data = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      setProducts(data);
+    }
+
+    fetchProducts();
+  }, []);
 
   return (
-    <div style={{ padding: "20px", fontFamily: "Arial" }}>
+    <div style={{ padding: "20px" }}>
       <h1>🛒 ZShop</h1>
-      <p>Compare prices and get best deals 🔥</p>
 
-      {products.map((p, i) => {
-        const best = Math.min(p.amazon, p.flipkart);
+      {products.length === 0 ? (
+        <p>Loading...</p>
+      ) : (
+        products.map((p, i) => {
+          const best = Math.min(p.amazon, p.flipkart);
 
-        return (
-          <div key={i} style={{
-            border: "1px solid #ddd",
-            padding: "15px",
-            marginTop: "10px",
-            borderRadius: "10px"
-          }}>
-            <h2>{p.name}</h2>
-            <p>Amazon: ₹{p.amazon}</p>
-            <p>Flipkart: ₹{p.flipkart}</p>
-
-            <p style={{ color: "green" }}>
-              Best Price: ₹{best}
-            </p>
-          </div>
-        );
-      })}
+          return (
+            <div key={i} style={{
+              border: "1px solid #ccc",
+              padding: "10px",
+              margin: "10px"
+            }}>
+              <h2>{p.name}</h2>
+              <p>Amazon: ₹{p.amazon}</p>
+              <p>Flipkart: ₹{p.flipkart}</p>
+              <b style={{ color: "green" }}>
+                Best Price: ₹{best}
+              </b>
+            </div>
+          );
+        })
+      )}
     </div>
   );
-            }
+}
