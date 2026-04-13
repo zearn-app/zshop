@@ -1,1 +1,0 @@
-import ProductCard from "../components/ProductCard";export default function Home() {  const products = [    { name: "iPhone 13", amazon: 52000, flipkart: 51000 },    { name: "Samsung S21", amazon: 45000, flipkart: 43000 }  ];  return (    <div>      <h1>ZShop 🛒</h1>      {products.map((p, i) => (        <ProductCard key={i} product={p} />      ))}    </div>  );}
