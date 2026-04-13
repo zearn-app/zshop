@@ -21,9 +21,12 @@ const LandingPage: React.FC = () => {
           <button className="hover:text-yellow-400">How it works</button>
           <button className="hover:text-yellow-400">Contact</button>
         </div>
-        <button className="bg-yellow-400 text-black px-4 py-2 rounded-xl font-semibold hover:bg-yellow-300">
-          Login
-        </button>
+        <button
+  onClick={() => router.push("/login")}
+  className="bg-yellow-400 text-black px-4 py-2 rounded-xl font-semibold hover:bg-yellow-300"
+>
+  Login
+</button>
       </nav>
 
       {/* Hero Section */}
