@@ -3,7 +3,9 @@
 import React, { useState } from "react";
 import { useApp } from "../app";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../src/lib/firebase"; // adjust if path differs
+
+
+import { auth } from "@/lib/firebase"; // adjust if path differs
 
 const RegisterPage: React.FC = () => {
   const { goToLogin } = useApp();
