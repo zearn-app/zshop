@@ -8,7 +8,7 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase"; // adjust if path differs
 
 const RegisterPage: React.FC = () => {
-  const { goToLogin } = useApp();
+  const { goToLogin,goToHome } = useApp();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,7 +29,7 @@ const RegisterPage: React.FC = () => {
       console.log("Registered:", userCredential.user.email);
       alert("Account created!");
 
-      goToLogin(); // redirect after success
+      goToHome("?type=register"); // redirect after success
     } 
 catch (error: any) {
   console.error("FULL ERROR:", error);
