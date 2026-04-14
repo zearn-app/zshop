@@ -13,7 +13,7 @@ export const useApp = () => {
   const pathname = usePathname();
 
   const routes = {
-    lANDING: "/",
+    LANDING: "/",
     LOGIN: "/login",
     REGISTER: "/register",
     HOME: "/home",
