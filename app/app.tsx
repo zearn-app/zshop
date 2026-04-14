@@ -32,7 +32,7 @@ export const useApp = () => {
     goTolanding: () => router.push(routes.LANDING),
     goToLogin: () => router.push(routes.LOGIN),
     goToRegister: () => router.push(routes.REGISTER),
-    goToHome: () => router.push(routes.HOME),
+    goToHome: = (query: string = "") => {router.push(routes.HOME + query);},
     goToDashboard: () => router.push(routes.DASHBOARD),
     goToCompare: () => router.push(routes.COMPARE),
 
