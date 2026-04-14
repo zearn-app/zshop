@@ -6,7 +6,7 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 
 const LoginPage: React.FC = () => {
-  const {,goToHome, goBack } = useApp();
+  const { goToHome, goBack } = useApp();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
