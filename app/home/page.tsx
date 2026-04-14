@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useApp } from "./app";
+import { useApp } from "../app";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useSearchParams } from "next/navigation";
