@@ -1,14 +1,17 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { useApp } from "../app";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useSearchParams } from "next/navigation";
 
-const HomePage: React.FC = () => {
-  const { goToLogin } = useApp();
+/**
+ * 🔹 Inner component (uses search params)
+ */
+const HomeContent = () => {
   const searchParams = useSearchParams();
+  const { goToLogin } = useApp();
 
   const [message, setMessage] = useState("");
 
@@ -29,8 +32,7 @@ const HomePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-gray-800 text-white">
-
+    <>
       {/* 🔝 Navbar */}
       <nav className="flex justify-between items-center px-8 py-4 border-b border-gray-800">
         <h1 className="text-2xl font-bold text-yellow-400">ZShop</h1>
@@ -104,7 +106,19 @@ const HomePage: React.FC = () => {
 
         </div>
       </div>
+    </>
+  );
+};
 
+/**
+ * 🔹 Main Page with Suspense
+ */
+const HomePage: React.FC = () => {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-gray-800 text-white">
+      <Suspense fallback={<div className="text-center mt-10">Loading...</div>}>
+        <HomeContent />
+      </Suspense>
     </div>
   );
 };
