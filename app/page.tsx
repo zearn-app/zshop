@@ -3,6 +3,10 @@
 import React from "react";
 import { useApp } from "./app"; // adjust path if needed
 
+
+const { goToLogin, goToRegister } = useApp();
+
+
 const LandingPage: React.FC = () => {
   const { goToLogin } = useApp(); // ✅ use your central router
 
@@ -19,12 +23,21 @@ const LandingPage: React.FC = () => {
           <button className="hover:text-yellow-400">Contact</button>
         </div>
 
-        <button
-          onClick={goToLogin} // ✅ clean navigation
-          className="bg-yellow-400 text-black px-4 py-2 rounded-xl font-semibold hover:bg-yellow-300"
-        >
-          Login
-        </button>
+        <div className="space-x-3">
+  <button
+    onClick={goToLogin}
+    className="bg-gray-700 text-white px-4 py-2 rounded-xl font-semibold hover:bg-gray-600"
+  >
+    Login
+  </button>
+
+  <button
+    onClick={goToRegister}
+    className="bg-yellow-400 text-black px-4 py-2 rounded-xl font-semibold hover:bg-yellow-300"
+  >
+    Register
+  </button>
+</div>
       </nav>
 
       {/* Rest of your UI unchanged */}

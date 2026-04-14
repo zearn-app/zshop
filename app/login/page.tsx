@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useApp } from "./app"; // adjust path if needed
+import { useApp } from "../app"; // adjust path if needed
 
 const LoginPage: React.FC = () => {
   const { goToDashboard, goBack } = useApp();

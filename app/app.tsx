@@ -14,7 +14,8 @@ export const useApp = () => {
 
   const routes = {
     HOME: "/",
-    LOGIN: "/login.tsx",
+    LOGIN: "/login",
+    REGISTER: "/register",
     DASHBOARD: "/dashboard",
     COMPARE: "/compare",
   };
@@ -29,6 +30,7 @@ export const useApp = () => {
     // Navigation helpers
     goToHome: () => router.push(routes.HOME),
     goToLogin: () => router.push(routes.LOGIN),
+goToRegister: () => router.push(routes.REGISTER),
     goToDashboard: () => router.push(routes.DASHBOARD),
     goToCompare: () => router.push(routes.COMPARE),
 
