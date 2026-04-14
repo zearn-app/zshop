@@ -4,12 +4,12 @@ import React from "react";
 import { useApp } from "./app"; // adjust path if needed
 
 
-const { goToLogin, goToRegister } = useApp();
+
 
 
 const LandingPage: React.FC = () => {
-  const { goToLogin } = useApp(); // ✅ use your central router
-
+const { goToLogin, goToRegister } = useApp();
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-gray-800 text-white">
 

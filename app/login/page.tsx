@@ -1,23 +1,58 @@
 "use client";
 
 import React, { useState } from "react";
-import { useApp } from "../app"; // adjust path if needed
+import { useApp } from "../app";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 const LoginPage: React.FC = () => {
   const { goToDashboard, goBack } = useApp();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    // 👉 Replace this with real auth logic
-    if (email && password) {
-      console.log("Logged in:", email);
-
-      // redirect after login
-      goToDashboard();
-    } else {
+  const handleLogin = async () => {
+    if (!email || !password) {
       alert("Please enter email and password");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+      console.log("Logged in:", userCredential.user.email);
+
+      alert("Login successful!");
+      goToDashboard(); // redirect after login
+    } catch (error: any) {
+      console.error("LOGIN ERROR:", error);
+
+      // Friendly error handling
+      switch (error.code) {
+        case "auth/user-not-found":
+          alert("No account found with this email");
+          break;
+        case "auth/wrong-password":
+          alert("Incorrect password");
+          break;
+        case "auth/invalid-email":
+          alert("Invalid email format");
+          break;
+        case "auth/too-many-requests":
+          alert("Too many attempts. Try again later");
+          break;
+        default:
+          alert(error.message);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -26,12 +61,10 @@ const LoginPage: React.FC = () => {
 
       <div className="bg-gray-900 p-8 rounded-2xl shadow-lg w-full max-w-md">
 
-        {/* Title */}
         <h2 className="text-3xl font-bold text-yellow-400 mb-6 text-center">
           Login to ZShop
         </h2>
 
-        {/* Email */}
         <input
           type="email"
           placeholder="Email"
@@ -40,7 +73,6 @@ const LoginPage: React.FC = () => {
           onChange={(e) => setEmail(e.target.value)}
         />
 
-        {/* Password */}
         <input
           type="password"
           placeholder="Password"
@@ -49,15 +81,14 @@ const LoginPage: React.FC = () => {
           onChange={(e) => setPassword(e.target.value)}
         />
 
-        {/* Login Button */}
         <button
           onClick={handleLogin}
-          className="w-full bg-yellow-400 text-black py-3 rounded-xl font-semibold hover:bg-yellow-300"
+          disabled={loading}
+          className="w-full bg-yellow-400 text-black py-3 rounded-xl font-semibold hover:bg-yellow-300 disabled:opacity-50"
         >
-          Login
+          {loading ? "Logging in..." : "Login"}
         </button>
 
-        {/* Back */}
         <button
           onClick={goBack}
           className="w-full mt-4 text-gray-400 hover:text-yellow-400"
