@@ -32,7 +32,7 @@ export const useApp = () => {
     goTolanding: () => router.push(routes.LANDING),
     goToLogin: () => router.push(routes.LOGIN),
     goToRegister: () => router.push(routes.REGISTER),
-    goToHome: () => router.push(routes.HOME);
+    goToHome: () => router.push(routes.HOME),
     goToDashboard: () => router.push(routes.DASHBOARD),
     goToCompare: () => router.push(routes.COMPARE),
 
@@ -43,8 +43,8 @@ export const useApp = () => {
     goBack: () => router.back(),
 
     // Route checks
-    isLanding: pathname === routes.LANDING,
-    isLogin: pathname === routes.LOGIN,
+    isLanding: pathname ===            routes.LANDING,
+    isLogin: pathname === routes.LOGIN,        
 isHome: pathname === routes.HOME,
     isDashboard: pathname === routes.DASHBOARD,
   };
