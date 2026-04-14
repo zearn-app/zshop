@@ -30,18 +30,11 @@ const RegisterPage: React.FC = () => {
       alert("Account created!");
 
       goToLogin(); // redirect after success
-    } catch (error: any) {
-      console.error(error);
-
-      // Friendly error messages
-      if (error.code === "auth/email-already-in-use") {
-        alert("Email already in use");
-      } else if (error.code === "auth/weak-password") {
-        alert("Password should be at least 6 characters");
-      } else {
-        alert("Registration failed");
-      }
-    }
+    } 
+catch (error: any) {
+  console.error("FULL ERROR:", error);
+  alert(error.message); // 👈 show real reason
+}
   };
 
   return (
