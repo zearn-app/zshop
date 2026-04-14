@@ -13,10 +13,10 @@ export const useApp = () => {
   const pathname = usePathname();
 
   const routes = {
-    HOME: "/",
+    lANDING: "/",
     LOGIN: "/login",
     REGISTER: "/register",
-    HOME: "/",
+    HOME: "/home",
     DASHBOARD: "/dashboard",
     COMPARE: "/compare",
   };
@@ -29,7 +29,7 @@ export const useApp = () => {
     routes,
 
     // Navigation helpers
-    goToHome: () => router.push(routes.HOME),
+    goTolanding: () => router.push(routes.LANDING),
     goToLogin: () => router.push(routes.LOGIN),
     goToRegister: () => router.push(routes.REGISTER),
     goToHome: () => router.push(routes.HOME);
@@ -43,8 +43,9 @@ export const useApp = () => {
     goBack: () => router.back(),
 
     // Route checks
-    isHome: pathname === routes.HOME,
+    isLanding: pathname === routes.LANDING,
     isLogin: pathname === routes.LOGIN,
+isHome: pathname === routes.HOME,
     isDashboard: pathname === routes.DASHBOARD,
   };
 };
