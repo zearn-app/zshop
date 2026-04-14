@@ -14,7 +14,7 @@ export const useApp = () => {
 
   const routes = {
     HOME: "/",
-    LOGIN: "/login.tsx",
+    LOGIN: "/login",
     DASHBOARD: "/dashboard",
     COMPARE: "/compare",
   };
