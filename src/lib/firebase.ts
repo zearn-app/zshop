@@ -15,7 +15,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-// ⚠️ Optional (can remove if error later)
+// ⚠️ Optional (can remove if errorb  later)
 const analytics = typeof window !== "undefined" ? getAnalytics(app) : null;
 
 export const db = getFirestore(app); // ✅ Now works
