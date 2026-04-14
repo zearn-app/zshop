@@ -1,12 +1,26 @@
 "use client";
 
-import React from "react";
-import { useApp } from "../app";
+import React, { useEffect, useState } from "react";
+import { useApp } from "./app";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { useSearchParams } from "next/navigation";
 
 const HomePage: React.FC = () => {
   const { goToLogin } = useApp();
+  const searchParams = useSearchParams();
+
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    const type = searchParams.get("type");
+
+    if (type === "register") {
+      setMessage("🎉 Welcome! Please complete your profile.");
+    } else if (type === "login") {
+      setMessage("👋 Welcome back!");
+    }
+  }, [searchParams]);
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -28,6 +42,13 @@ const HomePage: React.FC = () => {
           Logout
         </button>
       </nav>
+
+      {/* 🎉 Welcome Message */}
+      {message && (
+        <div className="text-center mt-6">
+          <p className="text-yellow-400 text-lg font-semibold">{message}</p>
+        </div>
+      )}
 
       {/* 🛍 Hero Section */}
       <div className="text-center py-16 px-6">
@@ -51,7 +72,6 @@ const HomePage: React.FC = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
 
-          {/* Product Card */}
           <div className="bg-gray-900 p-4 rounded-xl shadow hover:scale-105 transition">
             <div className="h-40 bg-gray-800 rounded mb-4"></div>
             <h4 className="font-semibold">Wireless Headphones</h4>
