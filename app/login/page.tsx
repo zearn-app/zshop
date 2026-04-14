@@ -30,7 +30,7 @@ const LoginPage: React.FC = () => {
       console.log("Logged in:", userCredential.user.email);
 
       alert("Login successful!");
-      goToHome(); // redirect after login
+      goToHome("?type=login"); // redirect after login
     } catch (error: any) {
       console.error("LOGIN ERROR:", error);
 
