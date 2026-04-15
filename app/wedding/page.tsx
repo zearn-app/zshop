@@ -7,6 +7,7 @@ import {
   useMotionValue,
   useSpring,
   useTransform,
+  useScroll,
 } from "framer-motion";
 
 // --- Types & Constants ---
@@ -56,7 +57,18 @@ const WeddingInvitation = () => {
   const [timeLeft, setTimeLeft] = useState({ d: 0, h: 0, m: 0, s: 0 });
   const [quoteIndex, setQuoteIndex] = useState(0);
   
-  // 🎯 Mouse tracking for parallax
+  const containerRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"]
+  });
+
+  // Scroll-based transforms for the card
+  const cardScale = useTransform(scrollYProgress, [0, 0.2], [1, 0.9]);
+  const cardOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0.8]);
+  const backgroundY = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
+
+  // Mouse tracking for parallax
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const mouseXSpring = useSpring(x, { stiffness: 150, damping: 20 });
@@ -77,7 +89,6 @@ const WeddingInvitation = () => {
     y.set(0);
   };
 
-  // ⏳ Countdown Logic
   useEffect(() => {
     const timer = setInterval(() => {
       const distance = weddingDate.getTime() - new Date().getTime();
@@ -92,34 +103,29 @@ const WeddingInvitation = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // 💬 Quote Cycle
   useEffect(() => {
     const interval = setInterval(() => setQuoteIndex(p => (p + 1) % quotes.length), 4000);
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <div className="relative min-h-screen w-full bg-[#0a0612] flex items-center justify-center p-4 overflow-hidden perspective-1000">
-      
-      {/* 🌌 DYNAMIC BACKGROUND LAYER */}
-      <div className="absolute inset-0 z-0">
+    <div 
+      ref={containerRef}
+      className={`relative w-full bg-[#0a0612] transition-all duration-1000 ${opened ? "h-[300vh]" : "h-screen overflow-hidden"}`}
+    >
+      {/* 🌌 STICKY BACKGROUND LAYER */}
+      <motion.div style={{ y: backgroundY }} className="fixed inset-0 z-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#2d1b4d] via-[#0a0612] to-black" />
         {stars.map((_, i) => <FloatingParticle key={i} i={i} />)}
         
-        {/* Animated Glow Orbs */}
         <motion.div 
-          animate={{ scale: [1, 1.5, 1], opacity: [0.3, 0.5, 0.3] }}
-          transition={{ duration: 10, repeat: Infinity }}
-          className="absolute top-[-10%] left-[-10%] w-[60vw] h-[60vw] bg-pink-600/20 rounded-full blur-[120px]" 
+          animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.3, 0.2] }}
+          transition={{ duration: 15, repeat: Infinity }}
+          className="absolute top-0 left-0 w-full h-full bg-pink-900/10 blur-[150px]"
         />
-        <motion.div 
-          animate={{ scale: [1.2, 1, 1.2], opacity: [0.2, 0.4, 0.2] }}
-          transition={{ duration: 12, repeat: Infinity }}
-          className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-purple-600/20 rounded-full blur-[120px]" 
-        />
-      </div>
+      </motion.div>
 
-      {/* 🌸 FALLING PETALS (Active after open) */}
+      {/* 🌸 FALLING PETALS */}
       <AnimatePresence>
         {opened && petals.map((_, i) => (
           <motion.div
@@ -127,187 +133,158 @@ const WeddingInvitation = () => {
             initial={{ y: -50, opacity: 0 }}
             animate={{ 
               y: "110vh", 
-              x: (Math.random() - 0.5) * 1000, 
+              x: (Math.random() - 0.5) * 1200, 
               rotate: 360, 
               opacity: [0, 1, 1, 0] 
             }}
             transition={{ duration: 7 + Math.random() * 5, repeat: Infinity, delay: i * 0.2 }}
-            className="absolute z-50 text-xl pointer-events-none"
+            className="fixed z-50 text-xl pointer-events-none"
           >
             🌸
           </motion.div>
         ))}
       </AnimatePresence>
 
-      {/* 💜 INTERACTIVE ENVELOPE / BUTTON */}
-      <AnimatePresence mode="wait">
-        {!opened ? (
-          <motion.div
-            key="envelope"
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ y: -100, opacity: 0, transition: { duration: 0.8, ease: "backIn" } }}
-            onClick={() => setOpened(true)}
-            className="group relative z-20 cursor-pointer"
-          >
-            <motion.div
-              whileHover={{ scale: 1.05, rotate: [0, -1, 1, 0] }}
-              className="bg-white/10 backdrop-blur-md p-12 rounded-[2rem] border border-white/20 shadow-2xl flex flex-col items-center"
-            >
-              <motion.div 
-                animate={{ y: [0, -10, 0] }} 
-                transition={{ repeat: Infinity, duration: 2 }}
-                className="text-7xl mb-6 relative"
-              >
-                💌
-                <motion.div 
-                  animate={{ scale: [1, 1.5], opacity: [0.5, 0] }}
-                  transition={{ repeat: Infinity, duration: 1.5 }}
-                  className="absolute inset-0 bg-pink-500 rounded-full blur-xl -z-10"
-                />
-              </motion.div>
-              <h3 className="text-white font-light tracking-[0.2em] uppercase text-sm">You are invited</h3>
-              <p className="text-white/50 text-xs mt-2 italic">Tap to reveal the magic</p>
-            </motion.div>
-          </motion.div>
-        ) : (
-          /* 🎉 THE MAIN CARD 🎉 */
-          <motion.div
-            key="card"
-            style={{ rotateX, rotateY }}
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-            initial={{ y: 200, scale: 0.8, opacity: 0, rotateY: 45 }}
-            animate={{ y: 0, scale: 1, opacity: 1, rotateY: 0 }}
-            transition={{ type: "spring", stiffness: 50, damping: 15 }}
-            className="relative z-10 w-full max-w-lg"
-          >
-            <div className="relative bg-white/95 backdrop-blur-2xl rounded-[3rem] p-10 shadow-[0_40px_100px_rgba(0,0,0,0.5)] border-4 border-double border-pink-100 overflow-hidden text-center">
-              
-              {/* Dynamic Shine Sweep */}
-              <motion.div 
-                style={{ left: cardGlowX }}
-                className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-12 pointer-events-none"
-              />
-
-              {/* Decorative Corner Flowers */}
-              <div className="absolute top-4 left-4 text-2xl opacity-20 rotate-45">🌿</div>
-              <div className="absolute top-4 right-4 text-2xl opacity-20 -rotate-45">🌿</div>
-
-              {/* Title Section */}
-              <motion.div className="mb-6">
-                {"WEDDING INVITATION".split("").map((char, i) => (
-                  <motion.span
-                    key={i}
-                    initial={{ opacity: 0, filter: "blur(10px)" }}
-                    animate={{ opacity: 1, filter: "blur(0px)" }}
-                    transition={{ delay: 0.5 + i * 0.05 }}
-                    className="inline-block text-xs font-black tracking-[0.4em] text-pink-500"
-                  >
-                    {char === " " ? "\u00A0" : char}
-                  </motion.span>
-                ))}
-              </motion.div>
-
-              <AnimatePresence mode="wait">
-                <motion.p
-                  key={quoteIndex}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="text-gray-400 italic mb-8 font-serif"
-                >
-                  "{quotes[quoteIndex]}"
-                </motion.p>
-              </AnimatePresence>
-
-              {/* Names Section */}
+      {/* --- CONTENT LAYERS --- */}
+      
+      <main className="relative z-10 flex flex-col items-center">
+        
+        {/* SECTION 1: HERO & ENVELOPE */}
+        <section className="h-screen w-full flex items-center justify-center p-4 sticky top-0">
+          <AnimatePresence mode="wait">
+            {!opened ? (
               <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
+                key="envelope"
+                initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 1.2 }}
-                className="mb-8"
+                exit={{ y: -500, opacity: 0, transition: { duration: 1, ease: [0.22, 1, 0.36, 1] } }}
+                onClick={() => setOpened(true)}
+                className="group relative z-20 cursor-pointer"
               >
-                <h1 className="text-5xl font-serif font-bold text-gray-800 leading-tight">
-                  Dhilip <br />
-                  <span className="text-3xl text-pink-500">&</span> <br />
-                  Partner Name
-                </h1>
-              </motion.div>
-
-              <motion.div 
-                initial={{ opacity: 0 }} 
-                animate={{ opacity: 1 }} 
-                transition={{ delay: 1.5 }}
-                className="space-y-4 mb-8"
-              >
-                <div className="flex justify-center items-center gap-4 text-gray-600">
-                  <div className="h-px w-8 bg-gray-200" />
-                  <span className="text-sm font-medium">SAVE THE DATE</span>
-                  <div className="h-px w-8 bg-gray-200" />
-                </div>
-
-                {/* Date Boxes */}
-                <div className="flex justify-center gap-3">
-                  {["20", "MAY", "2026"].map((item, idx) => (
-                    <motion.div
-                      key={item}
-                      whileHover={{ y: -5, backgroundColor: "#fff5f7" }}
-                      className="px-4 py-3 border border-pink-100 rounded-2xl"
-                    >
-                      <span className="block text-xl font-bold text-gray-800">{item}</span>
-                    </motion.div>
-                  ))}
-                </div>
-
-                <p className="text-gray-500 font-medium">
-                  📍 Sri Mahal Wedding Hall, Kattur
-                </p>
-              </motion.div>
-
-              {/* Timer Pill */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.8 }}
-                className="inline-flex items-center gap-4 bg-gray-900 text-white px-6 py-2 rounded-full text-sm mb-8"
-              >
-                <span className="animate-pulse text-pink-400">●</span>
-                <span>{timeLeft.d}d : {timeLeft.h}h : {timeLeft.m}m : {timeLeft.s}s</span>
-              </motion.div>
-
-              {/* Magnetic Action Button */}
-              <div>
-                <motion.button
-                  whileHover={{ scale: 1.1, boxShadow: "0 20px 40px rgba(244, 63, 94, 0.3)" }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => window.open("https://maps.google.com", "_blank")}
-                  className="relative overflow-hidden group bg-gradient-to-r from-pink-500 to-rose-600 text-white px-10 py-4 rounded-2xl font-bold shadow-xl"
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  className="bg-white/10 backdrop-blur-md p-12 rounded-[2rem] border border-white/20 shadow-2xl flex flex-col items-center"
                 >
-                  <motion.span 
-                    className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full transition-transform duration-700" 
-                  />
-                  View Location & Details
-                </motion.button>
-              </div>
-
-              <motion.p 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 0.6 }}
-                transition={{ delay: 2.2 }}
-                className="mt-8 text-xs text-gray-400 tracking-widest uppercase"
+                  <motion.div 
+                    animate={{ y: [0, -10, 0] }} 
+                    transition={{ repeat: Infinity, duration: 2 }}
+                    className="text-7xl mb-6 relative"
+                  >
+                    💌
+                  </motion.div>
+                  <h3 className="text-white font-light tracking-[0.2em] uppercase text-sm">You are invited</h3>
+                  <p className="text-white/50 text-xs mt-2 italic">Tap to reveal the magic</p>
+                </motion.div>
+              </motion.div>
+            ) : (
+              /* THE MAIN CARD with Scroll Sync */
+              <motion.div
+                key="card"
+                style={{ rotateX, rotateY, scale: cardScale, opacity: cardOpacity }}
+                onMouseMove={handleMouseMove}
+                onMouseLeave={handleMouseLeave}
+                initial={{ y: 500, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 40, damping: 20 }}
+                className="relative z-10 w-full max-w-lg"
               >
-                With Love, The Family
-              </motion.p>
-            </div>
-          </motion.div>
+                <div className="relative bg-white/95 backdrop-blur-2xl rounded-[3rem] p-10 shadow-[0_40px_100px_rgba(0,0,0,0.5)] border-4 border-double border-pink-100 overflow-hidden text-center">
+                  <motion.div style={{ left: cardGlowX }} className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-12 pointer-events-none" />
+                  
+                  <div className="mb-6">
+                    {"WEDDING INVITATION".split("").map((char, i) => (
+                      <motion.span key={i} className="inline-block text-xs font-black tracking-[0.4em] text-pink-500">{char === " " ? "\u00A0" : char}</motion.span>
+                    ))}
+                  </div>
+
+                  <AnimatePresence mode="wait">
+                    <motion.p key={quoteIndex} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-gray-400 italic mb-8 font-serif">"{quotes[quoteIndex]}"</motion.p>
+                  </AnimatePresence>
+
+                  <h1 className="text-5xl font-serif font-bold text-gray-800 leading-tight mb-8">
+                    Dhilip <br /> <span className="text-3xl text-pink-500">&</span> <br /> Partner Name
+                  </h1>
+
+                  <div className="space-y-4 mb-8">
+                    <div className="flex justify-center gap-3">
+                      {["20", "MAY", "2026"].map((item) => (
+                        <div key={item} className="px-4 py-3 border border-pink-100 rounded-2xl text-xl font-bold text-gray-800">{item}</div>
+                      ))}
+                    </div>
+                    <p className="text-gray-500 font-medium">📍 Sri Mahal Wedding Hall, Kattur</p>
+                  </div>
+
+                  <motion.div className="inline-flex items-center gap-4 bg-gray-900 text-white px-6 py-2 rounded-full text-sm mb-8">
+                    <span className="animate-pulse text-pink-400">●</span>
+                    <span>{timeLeft.d}d : {timeLeft.h}h : {timeLeft.m}m : {timeLeft.s}s</span>
+                  </motion.div>
+
+                  <div className="animate-bounce mt-4 text-pink-400 text-sm">Scroll Down ↓</div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </section>
+
+        {/* SECTION 2: DETAILS (Reveals on scroll) */}
+        {opened && (
+          <section className="min-h-screen w-full max-w-4xl px-6 py-24 flex flex-col items-center justify-center space-y-12">
+            <motion.div 
+              initial={{ opacity: 0, y: 100 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: false, margin: "-100px" }}
+              className="bg-white/10 backdrop-blur-xl p-12 rounded-[3rem] border border-white/10 w-full text-white"
+            >
+              <h2 className="text-3xl font-serif text-center mb-12 text-pink-300">The Ceremony</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                <div className="space-y-4 border-l-2 border-pink-500/30 pl-6">
+                  <h4 className="text-pink-400 font-bold uppercase tracking-widest text-xs">Muhurtham</h4>
+                  <p className="text-xl">Morning 9:00 AM - 10:30 AM</p>
+                  <p className="text-white/60 text-sm">Join us for the sacred union and traditional rituals.</p>
+                </div>
+                <div className="space-y-4 border-l-2 border-pink-500/30 pl-6">
+                  <h4 className="text-pink-400 font-bold uppercase tracking-widest text-xs">Reception</h4>
+                  <p className="text-xl">Evening 6:30 PM Onwards</p>
+                  <p className="text-white/60 text-sm">An evening of celebration, dinner, and memories.</p>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: false }}
+              className="w-full flex justify-center"
+            >
+              <button
+                onClick={() => window.open("https://maps.google.com", "_blank")}
+                className="group bg-white text-black px-12 py-5 rounded-full font-bold text-lg hover:bg-pink-500 hover:text-white transition-all duration-500 shadow-2xl flex items-center gap-3"
+              >
+                Get Directions to Venue 🗺️
+              </button>
+            </motion.div>
+          </section>
         )}
-      </AnimatePresence>
+
+        {/* SECTION 3: FINAL FOOTER */}
+        {opened && (
+          <section className="h-screen flex items-center justify-center">
+            <motion.div 
+               initial={{ opacity: 0 }}
+               whileInView={{ opacity: 1 }}
+               className="text-center"
+            >
+              <h2 className="text-6xl font-serif text-white/20 mb-4 italic italic">See you there...</h2>
+              <p className="text-pink-400 tracking-[0.5em] uppercase text-sm">We can't wait to celebrate with you</p>
+            </motion.div>
+          </section>
+        )}
+      </main>
 
       <style jsx global>{`
-        .perspective-1000 {
-          perspective: 1000px;
-        }
+        body { background: #0a0612; overflow-x: hidden; }
+        .perspective-1000 { perspective: 1000px; }
       `}</style>
     </div>
   );
