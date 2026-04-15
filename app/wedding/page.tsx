@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   motion,
   AnimatePresence,
@@ -9,11 +9,10 @@ import {
   useTransform,
 } from "framer-motion";
 
-const petals = Array.from({ length: 30 });
-const stars = Array.from({ length: 60 });
-
+// --- Types & Constants ---
+const petals = Array.from({ length: 40 });
+const stars = Array.from({ length: 80 });
 const weddingDate = new Date("2026-05-20T10:00:00");
-
 const quotes = [
   "Two hearts, one soul ❤️",
   "A journey of love begins 💍",
@@ -21,24 +20,53 @@ const quotes = [
   "Love brought us here 💖",
 ];
 
-const splitText = (text: string) => text.split("");
+// --- Sub-components ---
+
+const FloatingParticle = ({ i }: { i: number }) => {
+  const randomX = Math.random() * 100;
+  const randomDelay = Math.random() * 5;
+  const randomDuration = 10 + Math.random() * 20;
+
+  return (
+    <motion.div
+      className="absolute bg-white/20 rounded-full blur-[1px] pointer-events-none"
+      style={{
+        width: Math.random() * 4 + 1,
+        height: Math.random() * 4 + 1,
+        left: `${randomX}%`,
+        top: "100%",
+      }}
+      animate={{
+        y: ["0vh", "-110vh"],
+        x: [0, Math.random() * 100 - 50],
+        opacity: [0, 0.8, 0],
+      }}
+      transition={{
+        duration: randomDuration,
+        repeat: Infinity,
+        delay: randomDelay,
+        ease: "linear",
+      }}
+    />
+  );
+};
 
 const WeddingInvitation = () => {
   const [opened, setOpened] = useState(false);
-  const [timeLeft, setTimeLeft] = useState("");
+  const [timeLeft, setTimeLeft] = useState({ d: 0, h: 0, m: 0, s: 0 });
   const [quoteIndex, setQuoteIndex] = useState(0);
-
-  // 🎯 3D Tilt
+  
+  // 🎯 Mouse tracking for parallax
   const x = useMotionValue(0);
   const y = useMotionValue(0);
+  const mouseXSpring = useSpring(x, { stiffness: 150, damping: 20 });
+  const mouseYSpring = useSpring(y, { stiffness: 150, damping: 20 });
 
-  const mouseX = useSpring(x, { stiffness: 100, damping: 20 });
-  const mouseY = useSpring(y, { stiffness: 100, damping: 20 });
+  const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["15deg", "-15deg"]);
+  const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-15deg", "15deg"]);
+  const cardGlowX = useTransform(mouseXSpring, [-0.5, 0.5], ["0%", "100%"]);
 
-  const rotateX = useTransform(mouseY, [-0.5, 0.5], ["12deg", "-12deg"]);
-  const rotateY = useTransform(mouseX, [-0.5, 0.5], ["-12deg", "12deg"]);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleMouseMove = (e: React.MouseEvent) => {
     const rect = e.currentTarget.getBoundingClientRect();
     x.set((e.clientX - rect.left) / rect.width - 0.5);
     y.set((e.clientY - rect.top) / rect.height - 0.5);
@@ -49,232 +77,238 @@ const WeddingInvitation = () => {
     y.set(0);
   };
 
-  const openMap = () => {
-    window.open(
-      "https://maps.google.com/?q=Sri+Mahal+Wedding+Hall+Kattur+Tamil+Nadu",
-      "_blank"
-    );
-  };
-
-  // ⏳ Countdown
+  // ⏳ Countdown Logic
   useEffect(() => {
     const timer = setInterval(() => {
-      const now = new Date().getTime();
-      const distance = weddingDate.getTime() - now;
-
+      const distance = weddingDate.getTime() - new Date().getTime();
       if (distance < 0) return;
-
-      const d = Math.floor(distance / (1000 * 60 * 60 * 24));
-      const h = Math.floor((distance / (1000 * 60 * 60)) % 24);
-      const m = Math.floor((distance / (1000 * 60)) % 60);
-
-      setTimeLeft(`${d}d ${h}h ${m}m`);
+      setTimeLeft({
+        d: Math.floor(distance / (1000 * 60 * 60 * 24)),
+        h: Math.floor((distance / (1000 * 60 * 60)) % 24),
+        m: Math.floor((distance / (1000 * 60)) % 60),
+        s: Math.floor((distance / 1000) % 60),
+      });
     }, 1000);
-
     return () => clearInterval(timer);
   }, []);
 
-  // 💬 Quotes Rotation
+  // 💬 Quote Cycle
   useEffect(() => {
-    const interval = setInterval(() => {
-      setQuoteIndex((prev) => (prev + 1) % quotes.length);
-    }, 3500);
+    const interval = setInterval(() => setQuoteIndex(p => (p + 1) % quotes.length), 4000);
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <div className="min-h-screen w-full overflow-hidden bg-[#0f0a1f] flex items-center justify-center p-4">
-
-      {/* 🌌 BACKGROUND */}
+    <div className="relative min-h-screen w-full bg-[#0a0612] flex items-center justify-center p-4 overflow-hidden perspective-1000">
+      
+      {/* 🌌 DYNAMIC BACKGROUND LAYER */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1a0f2e] via-[#2b0f3a] to-[#3a0f2e] opacity-90" />
-
-        {/* Glow circles */}
-        <motion.div
-          className="absolute w-[500px] h-[500px] bg-pink-500/20 rounded-full blur-3xl top-[-100px] left-[-100px]"
-          animate={{ scale: [1, 1.2, 1] }}
-          transition={{ duration: 8, repeat: Infinity }}
-        />
-
-        <motion.div
-          className="absolute w-[400px] h-[400px] bg-purple-500/20 rounded-full blur-3xl bottom-[-100px] right-[-100px]"
-          animate={{ scale: [1, 1.3, 1] }}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#2d1b4d] via-[#0a0612] to-black" />
+        {stars.map((_, i) => <FloatingParticle key={i} i={i} />)}
+        
+        {/* Animated Glow Orbs */}
+        <motion.div 
+          animate={{ scale: [1, 1.5, 1], opacity: [0.3, 0.5, 0.3] }}
           transition={{ duration: 10, repeat: Infinity }}
+          className="absolute top-[-10%] left-[-10%] w-[60vw] h-[60vw] bg-pink-600/20 rounded-full blur-[120px]" 
         />
-
-        {/* Stars */}
-        {stars.map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute bg-white rounded-full"
-            style={{
-              width: Math.random() * 2,
-              height: Math.random() * 2,
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{ opacity: [0.2, 1, 0.2] }}
-            transition={{ duration: 2 + Math.random() * 3, repeat: Infinity }}
-          />
-        ))}
+        <motion.div 
+          animate={{ scale: [1.2, 1, 1.2], opacity: [0.2, 0.4, 0.2] }}
+          transition={{ duration: 12, repeat: Infinity }}
+          className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-purple-600/20 rounded-full blur-[120px]" 
+        />
       </div>
 
-      {/* 🌸 PETALS */}
+      {/* 🌸 FALLING PETALS (Active after open) */}
       <AnimatePresence>
-        {opened &&
-          petals.map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute text-2xl z-50"
-              initial={{ y: -100, x: Math.random() * 1200 }}
-              animate={{
-                y: "110vh",
-                rotate: 720,
-                opacity: [0, 1, 1, 0],
-              }}
-              transition={{
-                duration: 8 + Math.random() * 4,
-                repeat: Infinity,
-                delay: i * 0.15,
-                ease: "linear",
-              }}
-            >
-              🌸
-            </motion.div>
-          ))}
+        {opened && petals.map((_, i) => (
+          <motion.div
+            key={`petal-${i}`}
+            initial={{ y: -50, opacity: 0 }}
+            animate={{ 
+              y: "110vh", 
+              x: (Math.random() - 0.5) * 1000, 
+              rotate: 360, 
+              opacity: [0, 1, 1, 0] 
+            }}
+            transition={{ duration: 7 + Math.random() * 5, repeat: Infinity, delay: i * 0.2 }}
+            className="absolute z-50 text-xl pointer-events-none"
+          >
+            🌸
+          </motion.div>
+        ))}
       </AnimatePresence>
 
-      {/* 💜 OPEN BUTTON */}
-      <AnimatePresence>
-        {!opened && (
+      {/* 💜 INTERACTIVE ENVELOPE / BUTTON */}
+      <AnimatePresence mode="wait">
+        {!opened ? (
           <motion.div
+            key="envelope"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ y: -100, opacity: 0, transition: { duration: 0.8, ease: "backIn" } }}
             onClick={() => setOpened(true)}
-            className="z-20 text-center cursor-pointer"
-            exit={{ scale: 0, opacity: 0 }}
+            className="group relative z-20 cursor-pointer"
           >
             <motion.div
-              className="text-8xl relative"
-              animate={{ scale: [1, 1.15, 1] }}
-              transition={{ repeat: Infinity, duration: 1.2 }}
+              whileHover={{ scale: 1.05, rotate: [0, -1, 1, 0] }}
+              className="bg-white/10 backdrop-blur-md p-12 rounded-[2rem] border border-white/20 shadow-2xl flex flex-col items-center"
             >
-              💜
-
-              {/* Pulse ring */}
-              <motion.div
-                className="absolute inset-0 border-2 border-white rounded-full"
-                animate={{ scale: [1, 1.8], opacity: [0.5, 0] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-              />
+              <motion.div 
+                animate={{ y: [0, -10, 0] }} 
+                transition={{ repeat: Infinity, duration: 2 }}
+                className="text-7xl mb-6 relative"
+              >
+                💌
+                <motion.div 
+                  animate={{ scale: [1, 1.5], opacity: [0.5, 0] }}
+                  transition={{ repeat: Infinity, duration: 1.5 }}
+                  className="absolute inset-0 bg-pink-500 rounded-full blur-xl -z-10"
+                />
+              </motion.div>
+              <h3 className="text-white font-light tracking-[0.2em] uppercase text-sm">You are invited</h3>
+              <p className="text-white/50 text-xs mt-2 italic">Tap to reveal the magic</p>
             </motion.div>
-
-            <p className="text-white mt-4 opacity-80">
-              Tap to Open Invitation
-            </p>
           </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* 🎉 CARD */}
-      <AnimatePresence>
-        {opened && (
+        ) : (
+          /* 🎉 THE MAIN CARD 🎉 */
           <motion.div
+            key="card"
+            style={{ rotateX, rotateY }}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
-            style={{ rotateX, rotateY }}
-            initial={{ scale: 0.6, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="z-10 max-w-xl w-full"
+            initial={{ y: 200, scale: 0.8, opacity: 0, rotateY: 45 }}
+            animate={{ y: 0, scale: 1, opacity: 1, rotateY: 0 }}
+            transition={{ type: "spring", stiffness: 50, damping: 15 }}
+            className="relative z-10 w-full max-w-lg"
           >
-            <div className="relative bg-white/95 backdrop-blur-xl rounded-3xl p-8 text-center shadow-[0_20px_80px_rgba(0,0,0,0.4)] overflow-hidden">
-
-              {/* Shine sweep */}
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent"
-                animate={{ x: ["-100%", "100%"] }}
-                transition={{ repeat: Infinity, duration: 6 }}
+            <div className="relative bg-white/95 backdrop-blur-2xl rounded-[3rem] p-10 shadow-[0_40px_100px_rgba(0,0,0,0.5)] border-4 border-double border-pink-100 overflow-hidden text-center">
+              
+              {/* Dynamic Shine Sweep */}
+              <motion.div 
+                style={{ left: cardGlowX }}
+                className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-12 pointer-events-none"
               />
 
-              {/* Title */}
-              <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-pink-500 via-rose-500 to-yellow-500 bg-clip-text text-transparent">
-                {splitText("Wedding Invitation").map((char, i) => (
+              {/* Decorative Corner Flowers */}
+              <div className="absolute top-4 left-4 text-2xl opacity-20 rotate-45">🌿</div>
+              <div className="absolute top-4 right-4 text-2xl opacity-20 -rotate-45">🌿</div>
+
+              {/* Title Section */}
+              <motion.div className="mb-6">
+                {"WEDDING INVITATION".split("").map((char, i) => (
                   <motion.span
                     key={i}
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.04 }}
+                    initial={{ opacity: 0, filter: "blur(10px)" }}
+                    animate={{ opacity: 1, filter: "blur(0px)" }}
+                    transition={{ delay: 0.5 + i * 0.05 }}
+                    className="inline-block text-xs font-black tracking-[0.4em] text-pink-500"
                   >
-                    {char}
+                    {char === " " ? "\u00A0" : char}
                   </motion.span>
                 ))}
-              </h1>
-
-              {/* Quotes */}
-              <motion.p
-                key={quoteIndex}
-                className="text-gray-500 mb-4"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-              >
-                {quotes[quoteIndex]}
-              </motion.p>
-
-              {/* Names */}
-              <motion.h2
-                className="text-3xl font-semibold mb-2 bg-gradient-to-r from-purple-600 via-pink-500 to-rose-500 bg-clip-text text-transparent"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-              >
-                Dhilip 💖 Partner Name
-              </motion.h2>
-
-              <p className="mb-4 text-gray-600">
-                Together with their families invite you
-              </p>
-
-              {/* Countdown */}
-              <p className="mb-4 text-sm font-semibold text-rose-500">
-                ⏳ {timeLeft} left
-              </p>
-
-              {/* Date */}
-              <motion.div
-                className="bg-rose-50 p-4 rounded-xl mb-5 border border-rose-200 text-black"
-                whileHover={{ scale: 1.05 }}
-              >
-                <p>📅 20 May 2026</p>
-                <p>⏰ 10:00 AM</p>
               </motion.div>
 
-              <p className="text-gray-600">
-                Sri Mahal Wedding Hall, Kattur
-              </p>
+              <AnimatePresence mode="wait">
+                <motion.p
+                  key={quoteIndex}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="text-gray-400 italic mb-8 font-serif"
+                >
+                  "{quotes[quoteIndex]}"
+                </motion.p>
+              </AnimatePresence>
 
-              {/* Button */}
-              <motion.button
-                onClick={openMap}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                className="mt-5 px-6 py-3 bg-gradient-to-r from-pink-500 to-rose-600 text-white rounded-full shadow-lg"
+              {/* Names Section */}
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 1.2 }}
+                className="mb-8"
               >
-                📍 Get Directions
-              </motion.button>
+                <h1 className="text-5xl font-serif font-bold text-gray-800 leading-tight">
+                  Dhilip <br />
+                  <span className="text-3xl text-pink-500">&</span> <br />
+                  Partner Name
+                </h1>
+              </motion.div>
 
-              {/* Footer */}
-              <motion.p
-                className="italic mt-6 text-gray-700"
-                animate={{ y: [0, -3, 0] }}
-                transition={{ repeat: Infinity, duration: 2 }}
+              <motion.div 
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                transition={{ delay: 1.5 }}
+                className="space-y-4 mb-8"
               >
-                Your presence will make our day special ❤️
+                <div className="flex justify-center items-center gap-4 text-gray-600">
+                  <div className="h-px w-8 bg-gray-200" />
+                  <span className="text-sm font-medium">SAVE THE DATE</span>
+                  <div className="h-px w-8 bg-gray-200" />
+                </div>
+
+                {/* Date Boxes */}
+                <div className="flex justify-center gap-3">
+                  {["20", "MAY", "2026"].map((item, idx) => (
+                    <motion.div
+                      key={item}
+                      whileHover={{ y: -5, backgroundColor: "#fff5f7" }}
+                      className="px-4 py-3 border border-pink-100 rounded-2xl"
+                    >
+                      <span className="block text-xl font-bold text-gray-800">{item}</span>
+                    </motion.div>
+                  ))}
+                </div>
+
+                <p className="text-gray-500 font-medium">
+                  📍 Sri Mahal Wedding Hall, Kattur
+                </p>
+              </motion.div>
+
+              {/* Timer Pill */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.8 }}
+                className="inline-flex items-center gap-4 bg-gray-900 text-white px-6 py-2 rounded-full text-sm mb-8"
+              >
+                <span className="animate-pulse text-pink-400">●</span>
+                <span>{timeLeft.d}d : {timeLeft.h}h : {timeLeft.m}m : {timeLeft.s}s</span>
+              </motion.div>
+
+              {/* Magnetic Action Button */}
+              <div>
+                <motion.button
+                  whileHover={{ scale: 1.1, boxShadow: "0 20px 40px rgba(244, 63, 94, 0.3)" }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => window.open("https://maps.google.com", "_blank")}
+                  className="relative overflow-hidden group bg-gradient-to-r from-pink-500 to-rose-600 text-white px-10 py-4 rounded-2xl font-bold shadow-xl"
+                >
+                  <motion.span 
+                    className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full transition-transform duration-700" 
+                  />
+                  View Location & Details
+                </motion.button>
+              </div>
+
+              <motion.p 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.6 }}
+                transition={{ delay: 2.2 }}
+                className="mt-8 text-xs text-gray-400 tracking-widest uppercase"
+              >
+                With Love, The Family
               </motion.p>
-
-              <p className="text-sm mt-3 text-gray-500">
-                With love, Dhilip & Family
-              </p>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      <style jsx global>{`
+        .perspective-1000 {
+          perspective: 1000px;
+        }
+      `}</style>
     </div>
   );
 };
