@@ -238,7 +238,7 @@ const WeddingInvitation = () => {
 
               {/* Date */}
               <motion.div
-                className="bg-rose-50 p-4 rounded-xl mb-5 border border-rose-200"
+                className="bg-rose-50 p-4 rounded-xl mb-5 border border-rose-200 text-black"
                 whileHover={{ scale: 1.05 }}
               >
                 <p>📅 20 May 2026</p>
