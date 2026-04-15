@@ -9,33 +9,26 @@ import {
   useTransform,
 } from "framer-motion";
 
-const petals = Array.from({ length: 20 });
-const stars = Array.from({ length: 30 });
+const petals = Array.from({ length: 25 });
+const stars = Array.from({ length: 40 });
 
 const WeddingInvitation = () => {
   const [opened, setOpened] = useState(false);
 
-  // --- 3D Tilt Logic ---
+  // --- 3D Tilt ---
   const x = useMotionValue(0);
   const y = useMotionValue(0);
-  const mouseXSpring = useSpring(x);
-  const mouseYSpring = useSpring(y);
 
-  const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["10deg", "-10deg"]);
-  const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-10deg", "10deg"]);
+  const mouseX = useSpring(x);
+  const mouseY = useSpring(y);
 
-  // ✅ FIXED TYPE HERE
+  const rotateX = useTransform(mouseY, [-0.5, 0.5], ["12deg", "-12deg"]);
+  const rotateY = useTransform(mouseX, [-0.5, 0.5], ["-12deg", "12deg"]);
+
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    const width = rect.width;
-    const height = rect.height;
-
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-
-    const xPct = mouseX / width - 0.5;
-    const yPct = mouseY / height - 0.5;
-
+    const xPct = (e.clientX - rect.left) / rect.width - 0.5;
+    const yPct = (e.clientY - rect.top) / rect.height - 0.5;
     x.set(xPct);
     y.set(yPct);
   };
@@ -45,6 +38,7 @@ const WeddingInvitation = () => {
     y.set(0);
   };
 
+  // 📍 Google Maps
   const openMap = () => {
     window.open(
       "https://maps.google.com/?q=Sri+Mahal+Wedding+Hall+Kattur+Tamil+Nadu",
@@ -53,13 +47,15 @@ const WeddingInvitation = () => {
   };
 
   return (
-    <div className="min-h-screen w-full overflow-hidden bg-[#1a0b2e] flex items-center justify-center perspective-1000 p-4">
-      {/* 🌌 Animated Cosmic Background */}
+    <div className="min-h-screen w-full overflow-hidden bg-[#12071f] flex items-center justify-center p-4">
+
+      {/* 🌌 Background */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-rose-900 opacity-50" />
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-pink-900 to-rose-800 opacity-70" />
+
         {stars.map((_, i) => (
           <motion.div
-            key={`star-${i}`}
+            key={i}
             className="absolute bg-white rounded-full"
             style={{
               width: Math.random() * 3,
@@ -67,20 +63,20 @@ const WeddingInvitation = () => {
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
             }}
-            animate={{ opacity: [0.2, 0.8, 0.2], scale: [1, 1.2, 1] }}
+            animate={{ opacity: [0.2, 1, 0.2] }}
             transition={{ duration: 2 + Math.random() * 3, repeat: Infinity }}
           />
         ))}
       </div>
 
-      {/* 🌸 Floating Petals */}
+      {/* 🌸 Petals */}
       <AnimatePresence>
         {opened &&
           petals.map((_, i) => (
             <motion.div
-              key={`petal-${i}`}
-              className="absolute z-50 pointer-events-none text-2xl"
-              initial={{ y: -100, x: Math.random() * 1200, opacity: 0 }}
+              key={i}
+              className="absolute text-2xl pointer-events-none z-50"
+              initial={{ y: -100, x: Math.random() * 1200 }}
               animate={{
                 y: "110vh",
                 x: Math.random() * 1000,
@@ -90,8 +86,7 @@ const WeddingInvitation = () => {
               transition={{
                 duration: 7 + Math.random() * 5,
                 repeat: Infinity,
-                ease: "linear",
-                delay: i * 0.2,
+                delay: i * 0.15,
               }}
             >
               🌸
@@ -99,35 +94,55 @@ const WeddingInvitation = () => {
           ))}
       </AnimatePresence>
 
-      {/* 💜 HEART */}
+      {/* 💜 OPEN HEART */}
       <AnimatePresence>
         {!opened && (
           <motion.div
-            className="relative z-20 cursor-pointer group"
+            className="relative z-20 text-center cursor-pointer"
             onClick={() => setOpened(true)}
             exit={{ scale: 0, opacity: 0, filter: "blur(20px)" }}
-            transition={{ duration: 0.8 }}
           >
             <motion.div
               className="text-9xl"
-              animate={{ scale: [1, 1.15, 1] }}
-              transition={{ duration: 0.8, repeat: Infinity }}
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ duration: 1, repeat: Infinity }}
             >
               💜
             </motion.div>
 
             <motion.p
-              className="text-white mt-4 text-center uppercase"
-              animate={{ opacity: [0.4, 1, 0.4] }}
+              className="text-white mt-4 tracking-widest"
+              animate={{ opacity: [0.3, 1, 0.3] }}
               transition={{ duration: 2, repeat: Infinity }}
             >
-              Tap to Open
+              TAP TO OPEN INVITATION
             </motion.p>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* 🎉 CARD */}
+      {/* 💥 BURST */}
+      <AnimatePresence>
+        {opened &&
+          Array.from({ length: 25 }).map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute text-pink-400"
+              initial={{ x: 0, y: 0, opacity: 1 }}
+              animate={{
+                x: Math.random() * 600 - 300,
+                y: Math.random() * 600 - 300,
+                opacity: 0,
+                scale: 1.5,
+              }}
+              transition={{ duration: 1 }}
+            >
+              💖
+            </motion.div>
+          ))}
+      </AnimatePresence>
+
+      {/* 🎉 MAIN CARD */}
       <AnimatePresence>
         {opened && (
           <motion.div
@@ -136,23 +151,73 @@ const WeddingInvitation = () => {
             style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
             initial={{ opacity: 0, scale: 0.5, rotateY: -180 }}
             animate={{ opacity: 1, scale: 1, rotateY: 0 }}
-            className="relative z-10 max-w-xl w-full bg-white/10 backdrop-blur-2xl rounded-[2rem] p-1"
+            transition={{ duration: 1 }}
+            className="relative z-10 max-w-xl w-full"
           >
-            <div className="bg-white/90 rounded-[1.8rem] p-8 text-center">
-              <h1 className="text-5xl font-serif text-gray-800 mb-6">
+            <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl p-8 text-center relative overflow-hidden">
+
+              {/* ✨ Glow */}
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+                animate={{ x: ["-100%", "100%"] }}
+                transition={{ duration: 4, repeat: Infinity }}
+              />
+
+              {/* 🏷️ Header */}
+              <h1 className="text-4xl font-bold text-rose-600 mb-4">
                 Wedding Invitation
               </h1>
 
-              <h2 className="text-3xl font-bold">Dhilip</h2>
-              <p>&</p>
-              <h2 className="text-3xl font-bold">Partner Name</h2>
+              <p className="text-gray-600 mb-4">
+                Together with their families
+              </p>
 
-              <button
-                onClick={openMap}
-                className="mt-6 px-6 py-3 bg-black text-white rounded-full"
+              {/* 💑 Names */}
+              <motion.h2
+                className="text-3xl font-semibold text-gray-800 mb-2"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring" }}
               >
-                📍 Get Directions
-              </button>
+                Dhilip 💖 Partner Name
+              </motion.h2>
+
+              <p className="text-gray-500 mb-6">
+                Invite you to celebrate their beautiful journey of love ❤️
+              </p>
+
+              {/* 📅 Details */}
+              <div className="bg-rose-100 rounded-xl p-4 mb-6">
+                <p>📅 20th May 2026</p>
+                <p>⏰ 10:00 AM</p>
+              </div>
+
+              {/* 📍 Venue */}
+              <div className="mb-6">
+                <h3 className="text-xl font-semibold mb-2">📍 Venue</h3>
+                <p className="text-gray-600">
+                  Sri Mahal Wedding Hall,<br />
+                  Kattur, Tamil Nadu
+                </p>
+
+                <button
+                  onClick={openMap}
+                  className="mt-4 px-6 py-3 bg-gradient-to-r from-pink-500 to-rose-600 text-white rounded-full shadow-lg"
+                >
+                  📍 Get Directions
+                </button>
+              </div>
+
+              {/* 💌 Message */}
+              <p className="italic text-gray-700 mb-4">
+                "Your presence will make our celebration more joyful and
+                memorable."
+              </p>
+
+              <p className="text-sm text-gray-500">
+                With love ❤️ <br />
+                Dhilip & Family
+              </p>
             </div>
           </motion.div>
         )}
