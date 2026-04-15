@@ -128,29 +128,46 @@ const WeddingInvitation = () => {
         ))}
       </motion.div>
 
-      {/* 🌸 PETALS */}
-      <AnimatePresence>
-        {opened &&
-          petals.map((_, i) => (
-            <motion.div
-              key={i}
-              initial={{ y: -50, opacity: 0 }}
-              animate={{
-                y: "110vh",
-                opacity: [0, 1, 0],
-              }}
-              transition={{
-                duration: 8,
-                repeat: Infinity,
-                delay: i * 0.3,
-              }}
-              className="fixed z-50 text-lg"
-            >
-              🌸
-            </motion.div>
-          ))}
-      </AnimatePresence>
+      {/* 🌸 FALLING PETALS - IMPROVED */}
+<AnimatePresence>
+  {opened &&
+    petals.map((_, i) => {
+      const angle = Math.random() * Math.PI * 2; // spread in all directions
+      const radius = 300 + Math.random() * 800; // distance from center
 
+      const xEnd = Math.cos(angle) * radius;
+      const yEnd = Math.sin(angle) * radius + window.innerHeight;
+
+      const sway = Math.random() * 100 - 50;
+
+      return (
+        <motion.div
+          key={`petal-${i}`}
+          initial={{
+            x: 0,
+            y: -100,
+            opacity: 0,
+            scale: 0.6 + Math.random() * 0.6,
+          }}
+          animate={{
+            x: [0, sway, xEnd],
+            y: ["-10vh", "50vh", `${yEnd}px`],
+            rotate: [0, 180, 360],
+            opacity: [0, 1, 1, 0],
+          }}
+          transition={{
+            duration: 10 + Math.random() * 5,
+            ease: "easeInOut",
+            repeat: Infinity,
+            delay: i * 0.15,
+          }}
+          className="fixed z-50 text-xl pointer-events-none"
+        >
+          🌸
+        </motion.div>
+      );
+    })}
+</AnimatePresence>
       {/* CONTENT */}
       <main className="relative z-10 flex flex-col items-center">
         {/* HERO */}
