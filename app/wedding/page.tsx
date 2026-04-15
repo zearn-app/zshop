@@ -21,12 +21,14 @@ const quotes = [
   "Love brought us here 💖",
 ];
 
+const splitText = (text: string) => text.split("");
+
 const WeddingInvitation = () => {
   const [opened, setOpened] = useState(false);
   const [timeLeft, setTimeLeft] = useState("");
   const [quoteIndex, setQuoteIndex] = useState(0);
 
-  // --- 3D Tilt ---
+  // 🎯 3D Tilt
   const x = useMotionValue(0);
   const y = useMotionValue(0);
 
@@ -47,7 +49,6 @@ const WeddingInvitation = () => {
     y.set(0);
   };
 
-  // 📍 Map
   const openMap = () => {
     window.open(
       "https://maps.google.com/?q=Sri+Mahal+Wedding+Hall+Kattur+Tamil+Nadu",
@@ -73,7 +74,7 @@ const WeddingInvitation = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // 💬 Rotating Quotes
+  // 💬 Quotes Rotation
   useEffect(() => {
     const interval = setInterval(() => {
       setQuoteIndex((prev) => (prev + 1) % quotes.length);
@@ -98,10 +99,7 @@ const WeddingInvitation = () => {
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
             }}
-            animate={{
-              opacity: [0.2, 1, 0.2],
-              scale: [1, 1.5, 1],
-            }}
+            animate={{ opacity: [0.2, 1, 0.2], scale: [1, 1.5, 1] }}
             transition={{ duration: 3 + Math.random() * 2, repeat: Infinity }}
           />
         ))}
@@ -147,7 +145,14 @@ const WeddingInvitation = () => {
             >
               💜
             </motion.div>
-            <p className="text-white mt-4">Tap to Open</p>
+
+            <motion.p
+              className="text-white mt-4"
+              animate={{ opacity: [0.3, 1, 0.3] }}
+              transition={{ repeat: Infinity, duration: 2 }}
+            >
+              Tap to Open
+            </motion.p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -165,9 +170,9 @@ const WeddingInvitation = () => {
           >
             <div className="relative bg-white/90 backdrop-blur-xl rounded-3xl p-8 text-center shadow-2xl overflow-hidden">
 
-              {/* 🌟 Glow Pulse */}
+              {/* Glow */}
               <motion.div
-                className="absolute inset-0 bg-rose-300/20 rounded-3xl blur-2xl"
+                className="absolute inset-0 bg-rose-300/20 blur-2xl"
                 animate={{ scale: [1, 1.1, 1] }}
                 transition={{ repeat: Infinity, duration: 4 }}
               />
@@ -179,8 +184,18 @@ const WeddingInvitation = () => {
                 transition={{ repeat: Infinity, duration: 5 }}
               />
 
-              <h1 className="text-4xl font-bold text-rose-600 mb-3">
-                Wedding Invitation
+              {/* 🏷️ Header (Letter Animation + Gradient) */}
+              <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-pink-500 via-rose-500 to-yellow-500 bg-clip-text text-transparent">
+                {splitText("Wedding Invitation").map((char, i) => (
+                  <motion.span
+                    key={i}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                  >
+                    {char}
+                  </motion.span>
+                ))}
               </h1>
 
               {/* 💬 Quotes */}
@@ -193,40 +208,67 @@ const WeddingInvitation = () => {
                 {quotes[quoteIndex]}
               </motion.p>
 
-              <h2 className="text-3xl font-semibold mb-2">
+              {/* 💑 Names (Double Gradient + Glow) */}
+              <motion.h2
+                className="text-3xl font-semibold mb-2 bg-gradient-to-r from-purple-600 via-pink-500 to-rose-500 bg-clip-text text-transparent"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring" }}
+              >
                 Dhilip 💖 Partner Name
-              </h2>
+              </motion.h2>
 
               <p className="mb-4 text-gray-600">
                 Together with their families invite you
               </p>
 
               {/* ⏳ Countdown */}
-              <p className="mb-4 text-sm text-rose-500 font-semibold">
+              <motion.p
+                className="mb-4 text-sm font-semibold bg-gradient-to-r from-rose-500 to-pink-500 bg-clip-text text-transparent"
+                animate={{ opacity: [0.5, 1, 0.5] }}
+                transition={{ repeat: Infinity, duration: 2 }}
+              >
                 ⏳ {timeLeft} left
-              </p>
+              </motion.p>
 
-              <div className="bg-rose-100 p-4 rounded-xl mb-5">
+              {/* 📅 Box */}
+              <motion.div
+                className="bg-rose-100 p-4 rounded-xl mb-5"
+                whileHover={{ scale: 1.05 }}
+              >
                 <p>📅 20 May 2026</p>
                 <p>⏰ 10:00 AM</p>
-              </div>
+              </motion.div>
 
               <p className="text-gray-600">
                 Sri Mahal Wedding Hall, Kattur
               </p>
 
+              {/* 📍 Button */}
               <motion.button
                 onClick={openMap}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                className="mt-5 px-6 py-3 bg-gradient-to-r from-pink-500 to-rose-600 text-white rounded-full shadow-lg"
+                className="mt-5 px-6 py-3 bg-gradient-to-r from-pink-500 to-rose-600 text-white rounded-full shadow-lg relative overflow-hidden"
               >
                 📍 Get Directions
+
+                <motion.span
+                  className="absolute inset-0 bg-white/30"
+                  initial={{ scale: 0, opacity: 0 }}
+                  whileHover={{ scale: 2, opacity: 0 }}
+                  transition={{ duration: 0.6 }}
+                />
               </motion.button>
 
-              <p className="italic mt-6 text-gray-700">
+              {/* 💌 Footer */}
+              <motion.p
+                className="italic mt-6 text-gray-700"
+                animate={{ y: [0, -3, 0] }}
+                transition={{ repeat: Infinity, duration: 2 }}
+              >
                 Your presence will make our day special ❤️
-              </p>
+              </motion.p>
 
               <p className="text-sm mt-3 text-gray-500">
                 With love, Dhilip & Family
