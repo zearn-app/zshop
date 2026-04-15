@@ -11,9 +11,8 @@ import {
 } from "framer-motion";
 
 // --- Constants ---
-const petals = Array.from({ length: 35 });
-const stars = Array.from({ length: 70 });
-const sparkles = Array.from({ length: 25 });
+const petals = Array.from({ length: 30 });
+const stars = Array.from({ length: 60 });
 
 const weddingDate = new Date("2026-05-20T10:00:00");
 
@@ -25,49 +24,33 @@ const quotes = [
 ];
 
 // --- Floating Particles ---
-const FloatingParticle = () => {
-  return (
-    <motion.div
-      className="absolute bg-white/20 rounded-full blur-[1px]"
-      style={{
-        width: Math.random() * 3 + 1,
-        height: Math.random() * 3 + 1,
-        left: `${Math.random() * 100}%`,
-        top: "100%",
-      }}
-      animate={{
-        y: ["0vh", "-120vh"],
-        x: [0, Math.random() * 80 - 40],
-        opacity: [0, 0.8, 0],
-      }}
-      transition={{
-        duration: 10 + Math.random() * 15,
-        repeat: Infinity,
-        ease: "linear",
-      }}
-    />
-  );
-};
-
-// --- Sparkle Burst ---
-const Sparkle = () => (
+const FloatingParticle = ({ theme }: { theme: string }) => (
   <motion.div
-    className="absolute text-pink-300"
-    initial={{ scale: 0, opacity: 0 }}
-    animate={{
-      scale: [0, 1.5, 0],
-      opacity: [0, 1, 0],
-      x: (Math.random() - 0.5) * 300,
-      y: (Math.random() - 0.5) * 300,
+    className={`absolute rounded-full blur-[1px] ${
+      theme === "night" ? "bg-white/20" : "bg-yellow-400/30"
+    }`}
+    style={{
+      width: Math.random() * 3 + 1,
+      height: Math.random() * 3 + 1,
+      left: `${Math.random() * 100}%`,
+      top: "100%",
     }}
-    transition={{ duration: 1.5 }}
-  >
-    ✨
-  </motion.div>
+    animate={{
+      y: ["0vh", "-120vh"],
+      opacity: [0, 0.8, 0],
+    }}
+    transition={{
+      duration: 10 + Math.random() * 10,
+      repeat: Infinity,
+      ease: "linear",
+    }}
+  />
 );
 
 export default function WeddingInvitation() {
   const [opened, setOpened] = useState(false);
+  const [theme, setTheme] = useState("night");
+  const [guest, setGuest] = useState("Guest");
   const [timeLeft, setTimeLeft] = useState({ d: 0, h: 0, m: 0, s: 0 });
   const [quoteIndex, setQuoteIndex] = useState(0);
 
@@ -81,24 +64,20 @@ export default function WeddingInvitation() {
   // Mouse Parallax
   const x = useMotionValue(0);
   const y = useMotionValue(0);
-  const sx = useSpring(x, { stiffness: 120, damping: 20 });
-  const sy = useSpring(y, { stiffness: 120, damping: 20 });
+  const sx = useSpring(x);
+  const sy = useSpring(y);
 
   const rotateX = useTransform(sy, [-0.5, 0.5], ["12deg", "-12deg"]);
   const rotateY = useTransform(sx, [-0.5, 0.5], ["-12deg", "12deg"]);
 
-  const handleMouseMove = (e: any) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    x.set((e.clientX - rect.left) / rect.width - 0.5);
-    y.set((e.clientY - rect.top) / rect.height - 0.5);
-  };
+  // 🎯 GET GUEST NAME FROM URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const name = params.get("guest");
+    if (name) setGuest(name);
+  }, []);
 
-  const resetMouse = () => {
-    x.set(0);
-    y.set(0);
-  };
-
-  // Countdown
+  // ⏳ Countdown
   useEffect(() => {
     const t = setInterval(() => {
       const d = weddingDate.getTime() - Date.now();
@@ -125,14 +104,24 @@ export default function WeddingInvitation() {
   return (
     <div
       ref={ref}
-      className={`bg-[#0a0612] text-white ${
-        opened ? "h-[300vh]" : "h-screen overflow-hidden"
-      }`}
+      className={`transition-all duration-700 ${
+        theme === "night"
+          ? "bg-[#0a0612] text-white"
+          : "bg-gradient-to-br from-yellow-100 via-pink-100 to-white text-black"
+      } ${opened ? "h-[300vh]" : "h-screen overflow-hidden"}`}
     >
+      {/* 🌗 THEME TOGGLE */}
+      <button
+        onClick={() => setTheme(theme === "night" ? "day" : "night")}
+        className="fixed top-6 right-6 z-50 px-4 py-2 rounded-full bg-white/20 backdrop-blur-lg"
+      >
+        {theme === "night" ? "🌞 Day" : "🌙 Night"}
+      </button>
+
       {/* 🌌 Background */}
       <div className="fixed inset-0">
         {stars.map((_, i) => (
-          <FloatingParticle key={i} />
+          <FloatingParticle key={i} theme={theme} />
         ))}
       </div>
 
@@ -146,8 +135,7 @@ export default function WeddingInvitation() {
               initial={{ y: -50 }}
               animate={{
                 y: "110vh",
-                x: (Math.random() - 0.5) * 1000,
-                rotate: 360,
+                x: (Math.random() - 0.5) * 800,
               }}
               transition={{
                 duration: 6 + Math.random() * 4,
@@ -167,45 +155,30 @@ export default function WeddingInvitation() {
               key="envelope"
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ y: -500, opacity: 0 }}
+              exit={{ y: -400, opacity: 0 }}
               onClick={() => setOpened(true)}
               className="cursor-pointer text-center"
             >
-              <motion.div
-                whileHover={{ rotateY: 15, scale: 1.05 }}
-                className="p-12 bg-white/10 rounded-3xl backdrop-blur-xl"
-              >
-                <div className="text-7xl mb-4">💌</div>
-                <p>Tap to open</p>
-              </motion.div>
+              <div className="text-7xl mb-4">💌</div>
+              <p>Tap to open</p>
             </motion.div>
           ) : (
             <motion.div
               style={{ rotateX, rotateY, scale, opacity }}
-              onMouseMove={handleMouseMove}
-              onMouseLeave={resetMouse}
               className="bg-white text-black p-10 rounded-3xl text-center max-w-md"
             >
-              {/* Sparkles */}
-              {sparkles.map((_, i) => (
-                <Sparkle key={i} />
-              ))}
+              {/* 💖 PERSONALIZED TEXT */}
+              <p className="text-sm mb-2 text-gray-500">
+                Dear <span className="font-bold text-pink-500">{guest}</span>,
+              </p>
 
               <h1 className="text-4xl font-bold mb-4 animate-pulse">
                 Dhilip ❤️ Partner
               </h1>
 
-              <AnimatePresence mode="wait">
-                <motion.p
-                  key={quoteIndex}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="italic mb-4"
-                >
-                  {quotes[quoteIndex]}
-                </motion.p>
-              </AnimatePresence>
+              <motion.p key={quoteIndex} className="italic mb-4">
+                {quotes[quoteIndex]}
+              </motion.p>
 
               <p className="mb-4">20 MAY 2026</p>
 
@@ -220,12 +193,10 @@ export default function WeddingInvitation() {
       {/* DETAILS */}
       {opened && (
         <section className="h-screen flex flex-col justify-center items-center gap-8">
-          <motion.div
-            initial={{ opacity: 0, y: 100 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            className="bg-white/10 p-10 rounded-3xl backdrop-blur-lg"
-          >
-            <h2 className="text-2xl mb-4 text-pink-300">The Ceremony</h2>
+          <motion.div className="bg-white/10 p-10 rounded-3xl backdrop-blur-lg">
+            <h2 className="text-2xl mb-4 text-pink-400">
+              The Ceremony
+            </h2>
             <p>Muhurtham: 9:00 AM</p>
             <p>Reception: 6:30 PM</p>
           </motion.div>
@@ -242,7 +213,7 @@ export default function WeddingInvitation() {
       {/* FOOTER */}
       {opened && (
         <section className="h-screen flex items-center justify-center">
-          <h2 className="text-5xl text-white/20 italic">
+          <h2 className="text-5xl italic opacity-40">
             See you there...
           </h2>
         </section>
