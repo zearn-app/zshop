@@ -9,7 +9,7 @@ const WeddingInvitation = () => {
   return (
     <div className="min-h-screen overflow-hidden bg-gradient-to-br from-purple-900 via-pink-800 to-rose-600 flex items-center justify-center">
 
-      {/* 🔮 Floating Background Glow */}
+      {/* 🔮 Floating Background  Glow */}
       <motion.div
         className="absolute w-[500px] h-[500px] bg-purple-500 opacity-20 rounded-full blur-3xl"
         animate={{ x: [0, 100, -100, 0], y: [0, -100, 100, 0] }}
