@@ -25,8 +25,8 @@ function getTimeLeft() {
   const diff = weddingDate.getTime() - Date.now();
   return {
     d: Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24))),
-    h: Math.max(0, Math.floor((diff / (1000 * 60 * 60)) % 24)),
-    m: Math.max(0, Math.floor((diff / (1000 * 60)) % 60)),
+    h: Math.max(0, Math.floor((diff / (1000 * 60 * 60) % 24))),
+    m: Math.max(0, Math.floor((diff / (1000 * 60) % 60))),
     s: Math.max(0, Math.floor((diff / 1000) % 60)),
   };
 }
@@ -53,7 +53,7 @@ function EnvelopeIntro({ onOpen }: { onOpen: () => void }) {
           💌
         </motion.div>
 
-        {/* 🎬 Cinematic name reveal */}
+        {/* Name reveal */}
         <motion.h1
           className="text-white text-3xl mt-4 font-serif"
           initial={{ opacity: 0, y: 20, filter: "blur(6px)" }}
@@ -136,7 +136,7 @@ function StorySection({ children }: any) {
   );
 }
 
-// ---------------- TEXT WRAPPER (ENHANCED) ----------------
+// ---------------- TEXT WRAPPER ----------------
 function FadeText({ children }: any) {
   return (
     <motion.div
@@ -154,7 +154,6 @@ function FadeText({ children }: any) {
 export default function WeddingPage() {
   const [time, setTime] = useState(getTimeLeft());
   const [music, setMusic] = useState(false);
-
   const [intro, setIntro] = useState(true);
   const [opened, setOpened] = useState(false);
   const [paperOpen, setPaperOpen] = useState(false);
@@ -217,12 +216,20 @@ export default function WeddingPage() {
 
       {/* TOP BAR */}
       <div className="flex justify-between p-4 backdrop-blur-md bg-white/50 sticky top-0 z-40">
+        
+        {/* ❤️ HEARTBEAT ADDED HERE */}
         <motion.h1
           className="font-serif text-lg"
-          animate={{ opacity: [0.7, 1, 0.7] }}
-          transition={{ duration: 4, repeat: Infinity }}
+          animate={{ scale: [1, 1.08, 1] }}
+          transition={{ duration: 1.8, repeat: Infinity }}
         >
-          {couple.groom} ❤️ {couple.bride}
+          <span className="inline-block animate-pulse">
+            {couple.groom}
+          </span>
+          {" "}💜{" "}
+          <span className="inline-block animate-pulse">
+            {couple.bride}
+          </span>
         </motion.h1>
 
         <div className="flex gap-3">
@@ -248,9 +255,8 @@ export default function WeddingPage() {
                   <motion.div className="text-center py-20">
                     <motion.h1
                       className="text-5xl md:text-6xl font-serif"
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      whileInView={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 1 }}
+                      animate={{ scale: [1, 1.05, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
                     >
                       A Love Story
                     </motion.h1>
@@ -308,6 +314,11 @@ export default function WeddingPage() {
                     <FadeText>
                       <p className="opacity-80 max-w-xl mx-auto leading-relaxed">
                         With joyful hearts, we invite you to celebrate our union and bless our journey of love.
+                      </p>
+
+                      {/* ❤️ NEW INVITE MESSAGE */}
+                      <p className="mt-4 font-medium text-pink-500">
+                        Come with your family and bless us with full of heart ❤️
                       </p>
                     </FadeText>
                   </StorySection>
