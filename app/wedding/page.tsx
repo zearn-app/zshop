@@ -33,13 +33,13 @@ const fadeItem: Variants = {
 
 // --- 🎆 FIREWORK PARTICLE ---
 function Firework({ x, y }: { x: number; y: number }) {
-  const particles = Array.from({ length: 14 });
+  const particles = Array.from({ length: 16 });
 
   return (
     <>
       {particles.map((_, i) => {
         const angle = (i / particles.length) * 2 * Math.PI;
-        const distance = 80 + Math.random() * 40;
+        const distance = 60 + Math.random() * 60;
 
         return (
           <motion.span
@@ -49,7 +49,7 @@ function Firework({ x, y }: { x: number; y: number }) {
               x: x + Math.cos(angle) * distance,
               y: y + Math.sin(angle) * distance,
               opacity: 0,
-              scale: 0.5,
+              scale: 0.4,
             }}
             transition={{ duration: 1 }}
             className="fixed w-2 h-2 bg-pink-400 rounded-full z-50"
@@ -89,7 +89,6 @@ function FlipDigit({ value }: { value: string }) {
           exit={{ rotateX: 90, opacity: 0 }}
           transition={{ duration: 0.6 }}
           className="absolute inset-0 bg-white rounded-xl flex items-center justify-center text-3xl font-bold text-purple-700 shadow-md"
-          style={{ backfaceVisibility: "hidden" }}
         >
           {value}
         </motion.div>
@@ -122,10 +121,13 @@ export default function WeddingInvitation() {
   const [quoteIndex, setQuoteIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  const [fireworks, setFireworks] = useState<{ x: number; y: number }[]>([]);
+  const [fireworks, setFireworks] = useState<
+    { id: number; x: number; y: number }[]
+  >([]);
   const [showPetals, setShowPetals] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement>(null);
+  const fireworkId = useRef(0);
 
   // --- Countdown ---
   useEffect(() => {
@@ -153,20 +155,33 @@ export default function WeddingInvitation() {
     return () => clearInterval(interval);
   }, []);
 
+  // 🎆 Continuous Fireworks
+  useEffect(() => {
+    if (!opened) return;
+
+    const interval = setInterval(() => {
+      const newFirework = {
+        id: fireworkId.current++,
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * (window.innerHeight * 0.6),
+      };
+
+      setFireworks((prev) => [...prev, newFirework]);
+
+      // remove after animation
+      setTimeout(() => {
+        setFireworks((prev) =>
+          prev.filter((fw) => fw.id !== newFirework.id)
+        );
+      }, 1000);
+    }, 600);
+
+    return () => clearInterval(interval);
+  }, [opened]);
+
   const openInvitation = () => {
     setOpened(true);
-
-    // 🎆 Firework bursts (multiple points)
-    const bursts = [
-      { x: window.innerWidth / 2, y: window.innerHeight / 2 },
-      { x: window.innerWidth * 0.3, y: window.innerHeight * 0.4 },
-      { x: window.innerWidth * 0.7, y: window.innerHeight * 0.3 },
-    ];
-
-    setFireworks(bursts);
     setShowPetals(true);
-
-    setTimeout(() => setFireworks([]), 1200);
 
     setTimeout(() => {
       audioRef.current?.play().catch(() => {});
@@ -190,9 +205,9 @@ export default function WeddingInvitation() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-purple-100 text-gray-800 overflow-x-hidden">
 
-      {/* 🎆 Fireworks */}
-      {fireworks.map((fw, i) => (
-        <Firework key={i} x={fw.x} y={fw.y} />
+      {/* 🎆 Continuous Fireworks */}
+      {fireworks.map((fw) => (
+        <Firework key={fw.id} x={fw.x} y={fw.y} />
       ))}
 
       {/* 🌸 Petals */}
