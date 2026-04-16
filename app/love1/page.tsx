@@ -1,125 +1,130 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import mojs from "@mojs/core";
-////hjn///
+
 export default function LovePage() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const soundRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    // ✅ Load mo.js from CDN
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/@mojs/core";
+    script.async = true;
 
-    const qs = (s: string) => containerRef.current!.querySelector(s) as HTMLElement;
+    script.onload = () => {
+      const mojs = (window as any).mojs;
+      if (!mojs || !containerRef.current) return;
 
-    const easingHeart = mojs.easing.path(
-      "M0,100C2.9,86.7,33.6-7.3,46-7.3s15.2,22.7,26,22.7S89,0,100,0"
-    );
+      const qs = (s: string) =>
+        containerRef.current!.querySelector(s) as HTMLElement;
 
-    const el = {
-      container: qs(".mo-container"),
+      const el = {
+        container: qs(".mo-container"),
 
-      i: qs(".lttr--I"),
-      l: qs(".lttr--L"),
-      o: qs(".lttr--O"),
-      v: qs(".lttr--V"),
-      e: qs(".lttr--E"),
-      y: qs(".lttr--Y"),
-      o2: qs(".lttr--O2"),
-      u: qs(".lttr--U"),
+        i: qs(".lttr--I"),
+        l: qs(".lttr--L"),
+        o: qs(".lttr--O"),
+        v: qs(".lttr--V"),
+        e: qs(".lttr--E"),
+        y: qs(".lttr--Y"),
+        o2: qs(".lttr--O2"),
+        u: qs(".lttr--U"),
 
-      lineLeft: qs(".line--left"),
-      lineRight: qs(".line--rght"),
+        lineLeft: qs(".line--left"),
+        lineRight: qs(".line--rght"),
 
-      colTxt: "#763c8c",
-      colHeart: "#fa4843",
-    };
+        colTxt: "#763c8c",
+        colHeart: "#fa4843",
+      };
 
-    class Heart extends mojs.CustomShape {
-      getShape() {
-        return `<path d="M50,88.9C25.5,78.2,0.5,54.4,3.8,31.1S41.3,1.8,50,29.9c8.7-28.2,42.8-22.2,46.2,1.2S74.5,78.2,50,88.9z"/>`;
+      // ❤️ Heart shape
+      class Heart extends mojs.CustomShape {
+        getShape() {
+          return `<path d="M50,88.9C25.5,78.2,0.5,54.4,3.8,31.1S41.3,1.8,50,29.9c8.7-28.2,42.8-22.2,46.2,1.2S74.5,78.2,50,88.9z"/>`;
+        }
+        getLength() {
+          return 200;
+        }
       }
-      getLength() {
-        return 200;
-      }
-    }
 
-    mojs.addShape("heart", Heart);
+      mojs.addShape("heart", Heart);
 
-    const crtBoom = (delay = 0, x = 0, rd = 46) => {
-      const parent = el.container;
+      const easingHeart = mojs.easing.path(
+        "M0,100C2.9,86.7,33.6-7.3,46-7.3s15.2,22.7,26,22.7S89,0,100,0"
+      );
 
-      const crcl = new mojs.Shape({
-        shape: "circle",
-        fill: "none",
-        stroke: el.colTxt,
-        strokeWidth: { 5: 0 },
-        radius: { [rd]: [rd + 20] },
-        easing: "quint.out",
-        duration: 300,
-        parent,
-        delay,
-        x,
-      });
+      const crtBoom = (delay = 0, x = 0, rd = 46) => {
+        const parent = el.container;
 
-      const brst = new mojs.Burst({
-        radius: { [rd + 15]: 110 },
-        angle: "rand(60, 180)",
-        count: 3,
-        timeline: { delay },
-        parent,
-        x,
-        children: {
-          radius: [5, 3, 7],
-          fill: el.colTxt,
-          scale: { 1: 0 },
+        const crcl = new mojs.Shape({
+          shape: "circle",
+          fill: "none",
+          stroke: el.colTxt,
+          strokeWidth: { 5: 0 },
+          radius: { [rd]: [rd + 20] },
           duration: 300,
-        },
-      });
+          parent,
+          delay,
+          x,
+        });
 
-      return [crcl, brst];
+        const brst = new mojs.Burst({
+          radius: { [rd + 15]: 110 },
+          count: 3,
+          parent,
+          delay,
+          x,
+          children: {
+            radius: [5, 3, 7],
+            fill: el.colTxt,
+            scale: { 1: 0 },
+            duration: 300,
+          },
+        });
+
+        return [crcl, brst];
+      };
+
+      const timeline = new mojs.Timeline();
+
+      timeline.add([
+        new mojs.Html({
+          el: el.lineLeft,
+          x: { 0: 120 },
+          duration: 800,
+        }),
+
+        new mojs.Html({
+          el: el.lineRight,
+          x: { 0: -120 },
+          duration: 800,
+        }),
+
+        new mojs.Shape({
+          parent: el.container,
+          shape: "heart",
+          fill: el.colHeart,
+          scale: { 0: 1 },
+          duration: 800,
+          easing: easingHeart,
+        }),
+
+        ...crtBoom(500, 0),
+        ...crtBoom(1000, 50),
+      ]);
+
+      timeline.play();
+
+      setInterval(() => timeline.replay(), 4000);
     };
 
-    const timeline = new mojs.Timeline();
-
-    timeline.add([
-      new mojs.Html({
-        el: el.lineLeft,
-        x: { 0: 150 },
-        duration: 1000,
-      }),
-      new mojs.Html({
-        el: el.lineRight,
-        x: { 0: -150 },
-        duration: 1000,
-      }),
-
-      new mojs.Shape({
-        parent: el.container,
-        shape: "heart",
-        fill: el.colHeart,
-        scale: { 0: 1 },
-        duration: 800,
-        easing: easingHeart,
-      }),
-
-      ...crtBoom(500, 0),
-      ...crtBoom(1000, 50),
-    ]);
-
-    timeline.play();
-    const interval = setInterval(() => timeline.replay(), 4000);
-
-    return () => clearInterval(interval);
+    document.body.appendChild(script);
   }, []);
 
   return (
     <div className="love-wrapper">
       <div ref={containerRef} className="container">
-        <svg
-          className="svg-container"
-          viewBox="0 0 500 200"
-        >
+        <svg className="svg-container" viewBox="0 0 500 200">
           <line className="line line--left" x1="10" y1="17" x2="10" y2="183" />
           <line className="line line--rght" x1="490" y1="17" x2="490" y2="183" />
 
@@ -135,10 +140,9 @@ export default function LovePage() {
           </g>
         </svg>
 
-        <div className="mo-container" />
+        <div className="mo-container"></div>
       </div>
 
-      {/* STYLE */}
       <style jsx>{`
         .love-wrapper {
           min-height: 100vh;
@@ -165,7 +169,7 @@ export default function LovePage() {
         }
 
         .line {
-          stroke: white;
+          stroke: #ffffff;
           stroke-width: 8;
           stroke-linecap: round;
         }
