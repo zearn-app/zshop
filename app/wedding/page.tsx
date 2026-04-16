@@ -11,9 +11,8 @@ import {
 } from "framer-motion";
 
 // --- Constants ---
-const petals = Array.from({ length: 30 });
-const stars = Array.from({ length: 60 });
-
+const petals = Array.from({ length: 35 });
+const stars = Array.from({ length: 70 });
 const weddingDate = new Date("2026-05-20T10:00:00");
 
 const quotes = [
@@ -23,61 +22,75 @@ const quotes = [
   "Love brought us here 💖",
 ];
 
-// --- Floating Particles ---
-const FloatingParticle = ({ theme }: { theme: string }) => (
-  <motion.div
-    className={`absolute rounded-full blur-[1px] ${
-      theme === "night" ? "bg-white/20" : "bg-yellow-400/30"
-    }`}
-    style={{
-      width: Math.random() * 3 + 1,
-      height: Math.random() * 3 + 1,
-      left: `${Math.random() * 100}%`,
-      top: "100%",
-    }}
-    animate={{
-      y: ["0vh", "-120vh"],
-      opacity: [0, 0.8, 0],
-    }}
-    transition={{
-      duration: 10 + Math.random() * 10,
-      repeat: Infinity,
-      ease: "linear",
-    }}
-  />
+// --- Components ---
+
+const ThemeToggle = ({ isDark, toggle }: { isDark: boolean; toggle: () => void }) => (
+  <div 
+    onClick={toggle}
+    className="fixed top-8 right-8 z-50 cursor-pointer p-1 bg-white/10 backdrop-blur-md rounded-full border border-white/20 w-20 h-10 flex items-center"
+  >
+    <motion.div
+      animate={{ x: isDark ? 40 : 0 }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      className="w-8 h-8 rounded-full flex items-center justify-center text-xl shadow-lg"
+      style={{ background: isDark ? "#4c1d95" : "#fbbf24" }}
+    >
+      {isDark ? "🌙" : "☀️"}
+    </motion.div>
+  </div>
 );
+
+const FloatingElement = ({ isDark }: { isDark: boolean }) => {
+  return (
+    <motion.div
+      className="absolute rounded-full blur-[1px]"
+      style={{
+        width: Math.random() * 4 + 1,
+        height: Math.random() * 4 + 1,
+        left: `${Math.random() * 100}%`,
+        top: "100%",
+        backgroundColor: isDark ? "rgba(255,255,255,0.4)" : "rgba(251, 191, 36, 0.5)",
+      }}
+      animate={{
+        y: ["0vh", "-120vh"],
+        x: [0, Math.random() * 100 - 50],
+        opacity: [0, 1, 0],
+      }}
+      transition={{
+        duration: 8 + Math.random() * 10,
+        repeat: Infinity,
+        ease: "linear",
+      }}
+    />
+  );
+};
 
 export default function WeddingInvitation() {
   const [opened, setOpened] = useState(false);
-  const [theme, setTheme] = useState("night");
-  const [guest, setGuest] = useState("Guest");
+  const [isDark, setIsDark] = useState(true);
   const [timeLeft, setTimeLeft] = useState({ d: 0, h: 0, m: 0, s: 0 });
   const [quoteIndex, setQuoteIndex] = useState(0);
 
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({ target: ref });
 
-  // Scroll Animations
   const scale = useTransform(scrollYProgress, [0, 0.2], [1, 0.9]);
   const opacity = useTransform(scrollYProgress, [0, 0.2], [1, 0.7]);
 
-  // Mouse Parallax
   const x = useMotionValue(0);
   const y = useMotionValue(0);
-  const sx = useSpring(x);
-  const sy = useSpring(y);
+  const sx = useSpring(x, { stiffness: 100, damping: 20 });
+  const sy = useSpring(y, { stiffness: 100, damping: 20 });
 
-  const rotateX = useTransform(sy, [-0.5, 0.5], ["12deg", "-12deg"]);
-  const rotateY = useTransform(sx, [-0.5, 0.5], ["-12deg", "12deg"]);
+  const rotateX = useTransform(sy, [-0.5, 0.5], ["10deg", "-10deg"]);
+  const rotateY = useTransform(sx, [-0.5, 0.5], ["-10deg", "10deg"]);
 
-  // 🎯 GET GUEST NAME FROM URL
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const name = params.get("guest");
-    if (name) setGuest(name);
-  }, []);
+  const handleMouseMove = (e: React.MouseEvent) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    x.set((e.clientX - rect.left) / rect.width - 0.5);
+    y.set((e.clientY - rect.top) / rect.height - 0.5);
+  };
 
-  // ⏳ Countdown
   useEffect(() => {
     const t = setInterval(() => {
       const d = weddingDate.getTime() - Date.now();
@@ -92,132 +105,178 @@ export default function WeddingInvitation() {
     return () => clearInterval(t);
   }, []);
 
-  // Quotes Loop
   useEffect(() => {
-    const q = setInterval(
-      () => setQuoteIndex((p) => (p + 1) % quotes.length),
-      3500
-    );
+    const q = setInterval(() => setQuoteIndex((p) => (p + 1) % quotes.length), 4000);
     return () => clearInterval(q);
   }, []);
 
   return (
-    <div
+    <motion.div
       ref={ref}
-      className={`transition-all duration-700 ${
-        theme === "night"
-          ? "bg-[#0a0612] text-white"
-          : "bg-gradient-to-br from-yellow-100 via-pink-100 to-white text-black"
-      } ${opened ? "h-[300vh]" : "h-screen overflow-hidden"}`}
+      animate={{ 
+        backgroundColor: isDark ? "#0a0612" : "#fff7ed",
+        color: isDark ? "#ffffff" : "#431407"
+      }}
+      className={`transition-colors duration-1000 ${opened ? "h-[300vh]" : "h-screen overflow-hidden"}`}
     >
-      {/* 🌗 THEME TOGGLE */}
-      <button
-        onClick={() => setTheme(theme === "night" ? "day" : "night")}
-        className="fixed top-6 right-6 z-50 px-4 py-2 rounded-full bg-white/20 backdrop-blur-lg"
-      >
-        {theme === "night" ? "🌞 Day" : "🌙 Night"}
-      </button>
+      <ThemeToggle isDark={isDark} toggle={() => setIsDark(!isDark)} />
 
-      {/* 🌌 Background */}
-      <div className="fixed inset-0">
+      {/* 🌌 Dynamic Background Elements */}
+      <div className="fixed inset-0 pointer-events-none">
         {stars.map((_, i) => (
-          <FloatingParticle key={i} theme={theme} />
+          <FloatingElement key={i} isDark={isDark} />
         ))}
+        {/* Animated Sun/Moon Glow */}
+        <motion.div 
+          animate={{
+            scale: isDark ? 1 : 1.5,
+            opacity: isDark ? 0.2 : 0.4,
+            background: isDark ? "radial-gradient(circle, #4c1d95 0%, transparent 70%)" : "radial-gradient(circle, #fbbf24 0%, transparent 70%)"
+          }}
+          className="absolute -top-20 -left-20 w-96 h-96 blur-3xl"
+        />
       </div>
 
-      {/* 🌸 Petals */}
+      {/* 🌸 Interactive Petals */}
       <AnimatePresence>
-        {opened &&
-          petals.map((_, i) => (
-            <motion.div
-              key={i}
-              className="fixed text-xl"
-              initial={{ y: -50 }}
-              animate={{
-                y: "110vh",
-                x: (Math.random() - 0.5) * 800,
-              }}
-              transition={{
-                duration: 6 + Math.random() * 4,
-                repeat: Infinity,
-              }}
-            >
-              🌸
-            </motion.div>
-          ))}
+        {opened && petals.map((_, i) => (
+          <motion.div
+            key={i}
+            className="fixed text-2xl z-10"
+            initial={{ y: -100, opacity: 0 }}
+            animate={{ 
+              y: "110vh", 
+              x: `${(Math.random() - 0.5) * 100}vw`,
+              rotate: 360,
+              opacity: 1
+            }}
+            transition={{ duration: 7 + Math.random() * 5, repeat: Infinity, ease: "linear" }}
+          >
+            {isDark ? "✨" : "🌸"}
+          </motion.div>
+        ))}
       </AnimatePresence>
 
-      {/* HERO */}
-      <section className="h-screen flex items-center justify-center">
+      {/* HERO SECTION */}
+      <section className="h-screen flex items-center justify-center relative px-4">
         <AnimatePresence mode="wait">
           {!opened ? (
             <motion.div
               key="envelope"
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ y: -400, opacity: 0 }}
+              exit={{ y: -800, opacity: 0, rotate: 10 }}
               onClick={() => setOpened(true)}
-              className="cursor-pointer text-center"
+              className="cursor-pointer group"
             >
-              <div className="text-7xl mb-4">💌</div>
-              <p>Tap to open</p>
+              <motion.div
+                whileHover={{ y: -10 }}
+                className={`p-16 rounded-[40px] backdrop-blur-2xl border-2 transition-colors duration-700
+                  ${isDark ? "bg-white/5 border-white/10" : "bg-orange-100/50 border-orange-200"}`}
+              >
+                <motion.div 
+                  animate={{ y: [0, -10, 0] }}
+                  transition={{ repeat: Infinity, duration: 2 }}
+                  className="text-8xl mb-6 text-center"
+                >
+                  {isDark ? "✉️" : "💌"}
+                </motion.div>
+                <p className="text-xl font-light tracking-widest uppercase">Open Invitation</p>
+              </motion.div>
             </motion.div>
           ) : (
             <motion.div
               style={{ rotateX, rotateY, scale, opacity }}
-              className="bg-white text-black p-10 rounded-3xl text-center max-w-md"
+              onMouseMove={handleMouseMove}
+              onMouseLeave={() => { x.set(0); y.set(0); }}
+              className={`p-12 rounded-[50px] text-center max-w-lg shadow-2xl transition-colors duration-1000
+                ${isDark ? "bg-white text-black" : "bg-stone-900 text-stone-100"}`}
             >
-              {/* 💖 PERSONALIZED TEXT */}
-              <p className="text-sm mb-2 text-gray-500">
-                Dear <span className="font-bold text-pink-500">{guest}</span>,
-              </p>
-
-              <h1 className="text-4xl font-bold mb-4 animate-pulse">
-                Dhilip ❤️ Partner
+              <motion.span className="block text-pink-500 text-sm tracking-[0.3em] uppercase mb-4 font-bold">
+                Save The Date
+              </motion.span>
+              
+              <h1 className="text-5xl font-serif mb-6">
+                Dhilip <span className="text-pink-500">&</span> Partner
               </h1>
 
-              <motion.p key={quoteIndex} className="italic mb-4">
-                {quotes[quoteIndex]}
-              </motion.p>
+              <AnimatePresence mode="wait">
+                <motion.p
+                  key={quoteIndex}
+                  initial={{ y: 10, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: -10, opacity: 0 }}
+                  className="text-xl italic font-serif mb-8 h-8"
+                >
+                  {quotes[quoteIndex]}
+                </motion.p>
+              </AnimatePresence>
 
-              <p className="mb-4">20 MAY 2026</p>
+              <div className="flex justify-center gap-4 mb-8">
+                {Object.entries(timeLeft).map(([unit, value]) => (
+                  <div key={unit} className="flex flex-col items-center">
+                    <span className="text-2xl font-bold">{value}</span>
+                    <span className="text-[10px] uppercase opacity-60">{unit}</span>
+                  </div>
+                ))}
+              </div>
 
-              <div className="bg-black text-white p-2 rounded-full">
-                {timeLeft.d}d {timeLeft.h}h {timeLeft.m}m {timeLeft.s}s
+              <div className="text-sm border-t border-current/10 pt-6 opacity-80">
+                WEDNESDAY • MAY 20 • 2026
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </section>
 
-      {/* DETAILS */}
+      {/* DETAILS SECTION */}
       {opened && (
-        <section className="h-screen flex flex-col justify-center items-center gap-8">
-          <motion.div className="bg-white/10 p-10 rounded-3xl backdrop-blur-lg">
-            <h2 className="text-2xl mb-4 text-pink-400">
-              The Ceremony
-            </h2>
-            <p>Muhurtham: 9:00 AM</p>
-            <p>Reception: 6:30 PM</p>
+        <section className="min-h-screen flex flex-col justify-center items-center gap-12 px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className={`p-12 rounded-[40px] backdrop-blur-xl border w-full max-w-2xl
+              ${isDark ? "bg-white/5 border-white/10" : "bg-black/5 border-black/10"}`}
+          >
+            <div className="grid md:grid-cols-2 gap-12">
+              <div className="space-y-4">
+                <h2 className="text-3xl font-serif text-pink-400">The Vows</h2>
+                <p className="text-lg opacity-80">Muhurtham</p>
+                <p className="text-2xl font-bold">9:00 AM - 10:30 AM</p>
+              </div>
+              <div className="space-y-4">
+                <h2 className="text-3xl font-serif text-pink-400">The Party</h2>
+                <p className="text-lg opacity-80">Grand Reception</p>
+                <p className="text-2xl font-bold">Starts at 6:30 PM</p>
+              </div>
+            </div>
           </motion.div>
 
-          <button
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => window.open("https://maps.google.com")}
-            className="bg-white text-black px-6 py-3 rounded-full hover:bg-pink-500 hover:text-white"
+            className={`px-12 py-4 rounded-full font-bold text-lg shadow-xl transition-all
+              ${isDark ? "bg-white text-black hover:bg-pink-100" : "bg-stone-900 text-white hover:bg-stone-800"}`}
           >
-            Open Map 🗺️
-          </button>
+            Get Directions 📍
+          </motion.button>
         </section>
       )}
 
       {/* FOOTER */}
       {opened && (
         <section className="h-screen flex items-center justify-center">
-          <h2 className="text-5xl italic opacity-40">
-            See you there...
-          </h2>
+          <motion.h2 
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 0.15 }}
+            className="text-7xl md:text-9xl font-serif italic text-center px-4"
+          >
+            Waiting for you...
+          </motion.h2>
         </section>
       )}
-    </div>
+    </motion.div>
   );
 }
