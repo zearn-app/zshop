@@ -14,8 +14,8 @@ const quotes = [
   "Forever starts with you ✨",
 ];
 
-const MUSIC_URL =
-  "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
+// ✅ Your custom music from public folder
+const MUSIC_URL = "/anba-va-en-anba-va.mp3";
 
 // --- ANIMATIONS ---
 const fadeContainer: Variants = {
@@ -32,7 +32,7 @@ const fadeItem: Variants = {
   },
 };
 
-// --- FLIP DIGIT COMPONENT ---
+// --- FLIP DIGIT ---
 function FlipDigit({ value }: { value: string }) {
   return (
     <div className="relative w-12 h-16 perspective">
@@ -53,7 +53,7 @@ function FlipDigit({ value }: { value: string }) {
   );
 }
 
-// --- FLIP UNIT (2 DIGITS) ---
+// --- FLIP UNIT ---
 function FlipUnit({ value, label }: { value: number; label: string }) {
   const str = value.toString().padStart(2, "0");
 
@@ -70,7 +70,7 @@ function FlipUnit({ value, label }: { value: number; label: string }) {
   );
 }
 
-// --- MAIN COMPONENT ---
+// --- MAIN ---
 export default function WeddingInvitation() {
   const [opened, setOpened] = useState(false);
   const [timeLeft, setTimeLeft] = useState({ d: 0, h: 0, m: 0, s: 0 });
@@ -129,10 +129,12 @@ export default function WeddingInvitation() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-purple-100 text-gray-800 overflow-x-hidden">
 
+      {/* Audio */}
       <audio ref={audioRef} loop>
         <source src={MUSIC_URL} />
       </audio>
 
+      {/* Music Button */}
       {opened && (
         <button
           onClick={toggleMusic}
@@ -142,6 +144,7 @@ export default function WeddingInvitation() {
         </button>
       )}
 
+      {/* MAIN SECTION */}
       <section className="h-screen flex items-center justify-center px-6 text-center">
         <AnimatePresence mode="wait">
           {!opened ? (
@@ -164,21 +167,32 @@ export default function WeddingInvitation() {
               className="max-w-xl w-full bg-white p-10 rounded-3xl shadow-xl"
             >
               {/* Title */}
-              <motion.div className="text-4xl text-purple-800 mb-6">
+              <motion.div className="text-4xl text-purple-800 mb-4">
                 {letters.map((l, i) => (
                   <span key={i}>{l}</span>
                 ))}
               </motion.div>
 
+              {/* Invitation Text */}
+              <motion.p className="text-purple-600 mb-4">
+                With the blessings of our beloved families,
+                we joyfully invite you to celebrate the wedding of
+              </motion.p>
+
+              {/* Names */}
+              <motion.h2 className="text-2xl font-semibold text-purple-700 mb-4">
+                Dhilip 💜 Partner
+              </motion.h2>
+
               {/* Quote */}
-              <motion.p className="text-xl text-purple-600">
+              <motion.p className="text-lg text-purple-500">
                 {quotes[quoteIndex]}
               </motion.p>
 
-              {/* ✅ FLIP COUNTDOWN */}
+              {/* Countdown */}
               <motion.div
                 variants={fadeItem}
-                className="flex justify-center gap-6 mt-10 flex-wrap"
+                className="flex justify-center gap-6 mt-8 flex-wrap"
               >
                 <FlipUnit value={timeLeft.d} label="Days" />
                 <FlipUnit value={timeLeft.h} label="Hours" />
@@ -186,9 +200,23 @@ export default function WeddingInvitation() {
                 <FlipUnit value={timeLeft.s} label="Seconds" />
               </motion.div>
 
-              <p className="mt-8 text-purple-700">
-                May 20, 2026 • 10:00 AM
-              </p>
+              {/* Event Details */}
+              <motion.div className="mt-8 text-purple-700 space-y-2">
+                <p>📅 May 20, 2026</p>
+                <p>⏰ 10:00 AM onwards</p>
+                <p>📍 Wedding Hall, Your City</p>
+              </motion.div>
+
+              {/* Closing Message */}
+              <motion.p className="mt-6 text-purple-600">
+                Your presence will make our day even more special.
+                We look forward to celebrating with you 💖
+              </motion.p>
+
+              {/* Footer */}
+              <motion.p className="mt-6 text-sm text-purple-400">
+                With love & blessings 🙏
+              </motion.p>
             </motion.div>
           )}
         </AnimatePresence>
