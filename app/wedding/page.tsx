@@ -53,29 +53,30 @@ function EnvelopeIntro({ onOpen }: { onOpen: () => void }) {
           💌
         </motion.div>
 
+        {/* 🎬 Cinematic name reveal */}
         <motion.h1
           className="text-white text-3xl mt-4 font-serif"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
+          initial={{ opacity: 0, y: 20, filter: "blur(6px)" }}
+          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          transition={{ delay: 0.3, duration: 0.8 }}
         >
           {couple.groom} & {couple.bride}
         </motion.h1>
 
         <motion.p
           className="text-purple-300 mt-2 tracking-[0.3em] text-sm"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
+          initial={{ opacity: 0, letterSpacing: "0.5em" }}
+          animate={{ opacity: 1, letterSpacing: "0.3em" }}
+          transition={{ delay: 0.5, duration: 0.6 }}
         >
           WEDDING INVITATION
         </motion.p>
 
         <motion.p
           className="mt-6 text-white/60 text-sm"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.7 }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7, duration: 0.6 }}
         >
           Tap to open ✨
         </motion.p>
@@ -106,8 +107,12 @@ function FlipCard({ value }: { value: number }) {
       <motion.div
         key={value}
         initial={{ rotateX: -90, opacity: 0 }}
-        animate={{ rotateX: 0, opacity: 1 }}
-        transition={{ duration: 0.5 }}
+        animate={{
+          rotateX: 0,
+          opacity: 1,
+          scale: [1, 1.05, 1],
+        }}
+        transition={{ duration: 0.6 }}
         className="w-full h-full flex items-center justify-center bg-white/80 rounded-xl shadow text-2xl font-bold"
       >
         {value}
@@ -131,13 +136,13 @@ function StorySection({ children }: any) {
   );
 }
 
-// ---------------- TEXT ANIMATION WRAPPER (NEW) ----------------
+// ---------------- TEXT WRAPPER (ENHANCED) ----------------
 function FadeText({ children }: any) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6 }}
+      initial={{ opacity: 0, y: 14, filter: "blur(6px)" }}
+      whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      transition={{ duration: 0.7 }}
       viewport={{ once: true }}
     >
       {children}
@@ -212,9 +217,13 @@ export default function WeddingPage() {
 
       {/* TOP BAR */}
       <div className="flex justify-between p-4 backdrop-blur-md bg-white/50 sticky top-0 z-40">
-        <h1 className="font-serif text-lg">
+        <motion.h1
+          className="font-serif text-lg"
+          animate={{ opacity: [0.7, 1, 0.7] }}
+          transition={{ duration: 4, repeat: Infinity }}
+        >
           {couple.groom} ❤️ {couple.bride}
-        </h1>
+        </motion.h1>
 
         <div className="flex gap-3">
           <button onClick={() => setMusic(!music)}>🎵</button>
@@ -236,15 +245,12 @@ export default function WeddingPage() {
                 <PaperUnfold>
 
                   {/* HEADER */}
-                  <motion.div
-                    className="text-center py-20"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                  >
+                  <motion.div className="text-center py-20">
                     <motion.h1
                       className="text-5xl md:text-6xl font-serif"
-                      animate={{ scale: [1, 1.02, 1] }}
-                      transition={{ duration: 4, repeat: Infinity }}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 1 }}
                     >
                       A Love Story
                     </motion.h1>
@@ -283,7 +289,9 @@ export default function WeddingPage() {
                       {Object.entries(time).map(([k, v]) => (
                         <div key={k} className="text-center">
                           <FlipCard value={v} />
-                          <div className="text-xs mt-2 uppercase">{k}</div>
+                          <div className="text-xs mt-2 uppercase tracking-widest">
+                            {k}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -298,7 +306,7 @@ export default function WeddingPage() {
                     </FadeText>
 
                     <FadeText>
-                      <p className="opacity-80 max-w-xl mx-auto">
+                      <p className="opacity-80 max-w-xl mx-auto leading-relaxed">
                         With joyful hearts, we invite you to celebrate our union and bless our journey of love.
                       </p>
                     </FadeText>
@@ -313,7 +321,7 @@ export default function WeddingPage() {
                     <div className="flex flex-wrap justify-center gap-4">
                       {["📅", "⏰", "📍"].map((icon, i) => (
                         <FadeText key={i}>
-                          <div className="bg-white/70 p-4 rounded-2xl shadow">
+                          <div className="bg-white/70 p-4 rounded-2xl shadow hover:scale-105 transition">
                             {icon}{" "}
                             {[eventDetails.date, eventDetails.time, eventDetails.location][i]}
                           </div>
@@ -343,9 +351,10 @@ export default function WeddingPage() {
                         {gallery.map((img, i) => (
                           <motion.img
                             key={i}
-                            whileHover={{ scale: 1.05 }}
+                            whileHover={{ scale: 1.08 }}
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5 }}
                             src={img}
                             className="rounded-2xl shadow-lg object-cover w-full h-40 md:h-48"
                           />
