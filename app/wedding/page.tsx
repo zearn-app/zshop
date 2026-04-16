@@ -14,7 +14,6 @@ const quotes = [
   "Forever starts with you ✨",
 ];
 
-// ✅ Your custom music from public folder
 const MUSIC_URL = "/anba-va-en-anba-va.mp3";
 
 // --- ANIMATIONS ---
@@ -31,6 +30,52 @@ const fadeItem: Variants = {
     transition: { duration: 0.7, ease: "easeOut" },
   },
 };
+
+// --- 🎆 FIREWORK PARTICLE ---
+function Firework({ x, y }: { x: number; y: number }) {
+  const particles = Array.from({ length: 14 });
+
+  return (
+    <>
+      {particles.map((_, i) => {
+        const angle = (i / particles.length) * 2 * Math.PI;
+        const distance = 80 + Math.random() * 40;
+
+        return (
+          <motion.span
+            key={i}
+            initial={{ x, y, opacity: 1, scale: 1 }}
+            animate={{
+              x: x + Math.cos(angle) * distance,
+              y: y + Math.sin(angle) * distance,
+              opacity: 0,
+              scale: 0.5,
+            }}
+            transition={{ duration: 1 }}
+            className="fixed w-2 h-2 bg-pink-400 rounded-full z-50"
+          />
+        );
+      })}
+    </>
+  );
+}
+
+// --- 🌸 FLOWER PETAL ---
+function Petal() {
+  const left = Math.random() * 100;
+
+  return (
+    <motion.div
+      initial={{ y: -50, opacity: 0 }}
+      animate={{ y: "110vh", opacity: 1 }}
+      transition={{ duration: 5 + Math.random() * 3, ease: "linear" }}
+      className="fixed top-0 text-pink-300 text-xl z-40"
+      style={{ left: `${left}%` }}
+    >
+      🌸
+    </motion.div>
+  );
+}
 
 // --- FLIP DIGIT ---
 function FlipDigit({ value }: { value: string }) {
@@ -77,6 +122,9 @@ export default function WeddingInvitation() {
   const [quoteIndex, setQuoteIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
 
+  const [fireworks, setFireworks] = useState<{ x: number; y: number }[]>([]);
+  const [showPetals, setShowPetals] = useState(false);
+
   const audioRef = useRef<HTMLAudioElement>(null);
 
   // --- Countdown ---
@@ -107,6 +155,19 @@ export default function WeddingInvitation() {
 
   const openInvitation = () => {
     setOpened(true);
+
+    // 🎆 Firework bursts (multiple points)
+    const bursts = [
+      { x: window.innerWidth / 2, y: window.innerHeight / 2 },
+      { x: window.innerWidth * 0.3, y: window.innerHeight * 0.4 },
+      { x: window.innerWidth * 0.7, y: window.innerHeight * 0.3 },
+    ];
+
+    setFireworks(bursts);
+    setShowPetals(true);
+
+    setTimeout(() => setFireworks([]), 1200);
+
     setTimeout(() => {
       audioRef.current?.play().catch(() => {});
       setIsPlaying(true);
@@ -129,6 +190,15 @@ export default function WeddingInvitation() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-purple-100 text-gray-800 overflow-x-hidden">
 
+      {/* 🎆 Fireworks */}
+      {fireworks.map((fw, i) => (
+        <Firework key={i} x={fw.x} y={fw.y} />
+      ))}
+
+      {/* 🌸 Petals */}
+      {showPetals &&
+        Array.from({ length: 20 }).map((_, i) => <Petal key={i} />)}
+
       {/* Audio */}
       <audio ref={audioRef} loop>
         <source src={MUSIC_URL} />
@@ -144,7 +214,7 @@ export default function WeddingInvitation() {
         </button>
       )}
 
-      {/* MAIN SECTION */}
+      {/* MAIN */}
       <section className="h-screen flex items-center justify-center px-6 text-center">
         <AnimatePresence mode="wait">
           {!opened ? (
@@ -166,30 +236,25 @@ export default function WeddingInvitation() {
               animate="visible"
               className="max-w-xl w-full bg-white p-10 rounded-3xl shadow-xl"
             >
-              {/* Title */}
               <motion.div className="text-4xl text-purple-800 mb-4">
                 {letters.map((l, i) => (
                   <span key={i}>{l}</span>
                 ))}
               </motion.div>
 
-              {/* Invitation Text */}
               <motion.p className="text-purple-600 mb-4">
                 With the blessings of our beloved families,
                 we joyfully invite you to celebrate the wedding of
               </motion.p>
 
-              {/* Names */}
               <motion.h2 className="text-2xl font-semibold text-purple-700 mb-4">
                 Dhilip 💜 Partner
               </motion.h2>
 
-              {/* Quote */}
               <motion.p className="text-lg text-purple-500">
                 {quotes[quoteIndex]}
               </motion.p>
 
-              {/* Countdown */}
               <motion.div
                 variants={fadeItem}
                 className="flex justify-center gap-6 mt-8 flex-wrap"
@@ -200,20 +265,17 @@ export default function WeddingInvitation() {
                 <FlipUnit value={timeLeft.s} label="Seconds" />
               </motion.div>
 
-              {/* Event Details */}
               <motion.div className="mt-8 text-purple-700 space-y-2">
                 <p>📅 May 20, 2026</p>
                 <p>⏰ 10:00 AM onwards</p>
                 <p>📍 Wedding Hall, Your City</p>
               </motion.div>
 
-              {/* Closing Message */}
               <motion.p className="mt-6 text-purple-600">
                 Your presence will make our day even more special.
                 We look forward to celebrating with you 💖
               </motion.p>
 
-              {/* Footer */}
               <motion.p className="mt-6 text-sm text-purple-400">
                 With love & blessings 🙏
               </motion.p>
