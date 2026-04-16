@@ -81,10 +81,10 @@ function PaperUnfold({ children }: { children: React.ReactNode }) {
   );
 }
 
-// ---------------- FLIP CARD (COUNTDOWN) ----------------
+// ---------------- FLIP CARD ----------------
 function FlipCard({ value }: { value: number }) {
   return (
-    <div className="w-20 h-24 perspective-1000">
+    <div className="w-20 h-24">
       <motion.div
         key={value}
         initial={{ rotateX: -90, opacity: 0 }}
@@ -95,6 +95,21 @@ function FlipCard({ value }: { value: number }) {
         {value}
       </motion.div>
     </div>
+  );
+}
+
+// ---------------- SECTION WRAPPER (NETFLIX STYLE) ----------------
+function StorySection({ children, index }: any) {
+  return (
+    <motion.section
+      initial={{ opacity: 0, scale: 0.95, y: 80 }}
+      whileInView={{ opacity: 1, scale: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.4 }}
+      transition={{ duration: 0.8 }}
+      className="py-16 text-center"
+    >
+      {children}
+    </motion.section>
   );
 }
 
@@ -139,7 +154,6 @@ export default function WeddingPage() {
     } catch {}
   };
 
-  // SAFE SINGLE PARALLAX (no loop hooks)
   const { scrollYProgress } = useScroll();
   const globalY = useTransform(scrollYProgress, [0, 1], [0, -30]);
 
@@ -189,21 +203,32 @@ export default function WeddingPage() {
               <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }}>
                 <PaperUnfold>
 
+                  {/* 🎬 NETFLIX STORY MODE HEADER */}
+                  <motion.div
+                    className="text-center py-20"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 1 }}
+                  >
+                    <h1 className="text-5xl md:text-6xl font-serif">
+                      A Love Story
+                    </h1>
+                    <p className="mt-2 opacity-70">Scroll to experience our journey</p>
+                  </motion.div>
+
                   {/* HERO */}
-                  <section className="py-16 text-center">
+                  <StorySection>
                     <h1 className="text-4xl md:text-6xl font-serif">
                       {couple.groom} ❤️ {couple.bride}
                     </h1>
                     <p className="mt-4 italic opacity-80">
                       Two hearts, one soul, forever begins here
                     </p>
-                  </section>
+                  </StorySection>
 
-                  {/* FLIP COUNTDOWN */}
-                  <section className="py-16 text-center">
-                    <h2 className="text-2xl font-serif mb-6">
-                      Countdown to Forever
-                    </h2>
+                  {/* COUNTDOWN */}
+                  <StorySection>
+                    <h2 className="text-2xl font-serif mb-6">Countdown to Forever</h2>
 
                     <div className="flex flex-wrap justify-center gap-4">
                       {Object.entries(time).map(([k, v]) => (
@@ -213,18 +238,18 @@ export default function WeddingPage() {
                         </div>
                       ))}
                     </div>
-                  </section>
+                  </StorySection>
 
                   {/* INVITATION */}
-                  <section className="py-16 text-center max-w-2xl mx-auto">
+                  <StorySection>
                     <h2 className="text-2xl font-serif mb-4">Wedding Invitation</h2>
-                    <p className="opacity-80">
+                    <p className="opacity-80 max-w-xl mx-auto">
                       With joyful hearts, we invite you to celebrate our union and bless our journey of love.
                     </p>
-                  </section>
+                  </StorySection>
 
                   {/* EVENT */}
-                  <section className="py-16 text-center">
+                  <StorySection>
                     <h2 className="text-2xl font-serif mb-6">Event Details</h2>
 
                     <div className="flex flex-wrap justify-center gap-4">
@@ -240,33 +265,34 @@ export default function WeddingPage() {
                         loading="lazy"
                       />
                     </div>
-                  </section>
+                  </StorySection>
 
-                  {/* 3D GALLERY (SAFE PARALLAX) */}
-                  <section className="py-16 text-center">
+                  {/* GALLERY STORY ENDING */}
+                  <StorySection>
                     <h2 className="text-2xl font-serif mb-6">Our Memories</h2>
 
                     <motion.div style={{ y: globalY }}>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-4">
                         {gallery.map((img, i) => (
-                          <motion.div
+                          <motion.img
                             key={i}
-                            whileHover={{
-                              rotateX: 10,
-                              rotateY: 15,
-                              scale: 1.05,
-                            }}
-                            className="perspective-1000"
-                          >
-                            <img
-                              src={img}
-                              className="rounded-2xl shadow-lg object-cover w-full h-40 md:h-48"
-                            />
-                          </motion.div>
+                            whileHover={{ scale: 1.05 }}
+                            src={img}
+                            className="rounded-2xl shadow-lg object-cover w-full h-40 md:h-48"
+                          />
                         ))}
                       </div>
                     </motion.div>
-                  </section>
+                  </StorySection>
+
+                  {/* END CREDIT (NETFLIX STYLE) */}
+                  <motion.div
+                    className="py-20 text-center text-xl opacity-70"
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                  >
+                    The Beginning of Forever ❤️
+                  </motion.div>
 
                 </PaperUnfold>
               </motion.div>
