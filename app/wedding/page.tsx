@@ -31,7 +31,7 @@ const fadeItem: Variants = {
   },
 };
 
-// --- 🌌 CINEMATIC INTRO (UPGRADED PREMIUM VERSION) ---
+// --- CINEMATIC INTRO ---
 function CinematicIntro({ onDone }: { onDone: () => void }) {
   useEffect(() => {
     const t = setTimeout(onDone, 3200);
@@ -44,7 +44,6 @@ function CinematicIntro({ onDone }: { onDone: () => void }) {
       initial={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      {/* Ambient Glow Orbs */}
       {[...Array(4)].map((_, i) => (
         <motion.div
           key={i}
@@ -65,7 +64,6 @@ function CinematicIntro({ onDone }: { onDone: () => void }) {
         />
       ))}
 
-      {/* Light Sweep */}
       <motion.div
         initial={{ x: "-30%", opacity: 0 }}
         animate={{ x: "30%", opacity: 0.5 }}
@@ -73,7 +71,6 @@ function CinematicIntro({ onDone }: { onDone: () => void }) {
         className="absolute w-[200px] h-full bg-white/10 blur-2xl rotate-12"
       />
 
-      {/* Main Title Reveal */}
       <motion.div className="text-center z-10">
         <motion.h1
           initial={{ opacity: 0, scale: 0.8, letterSpacing: "0.5em" }}
@@ -104,7 +101,7 @@ function CinematicIntro({ onDone }: { onDone: () => void }) {
   );
 }
 
-// --- ✨ GLOW PARTICLE ---
+// --- GLOW ---
 function Glow() {
   return (
     <motion.div
@@ -126,7 +123,7 @@ function Glow() {
   );
 }
 
-// --- 🎆 FIREWORK ---
+// --- FIREWORK ---
 function Firework({ x, y }: { x: number; y: number }) {
   const particles = Array.from({ length: 18 });
 
@@ -155,7 +152,7 @@ function Firework({ x, y }: { x: number; y: number }) {
   );
 }
 
-// --- 🌸 PETAL ---
+// --- PETAL ---
 function Petal() {
   const left = Math.random() * 100;
 
@@ -217,7 +214,7 @@ function FlipUnit({ value, label }: { value: number; label: string }) {
   );
 }
 
-// --- MAIN ---
+// --- MAIN COMPONENT ---
 export default function WeddingInvitation() {
   const [introDone, setIntroDone] = useState(false);
   const [opened, setOpened] = useState(false);
@@ -232,12 +229,8 @@ export default function WeddingInvitation() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const fireworkId = useRef(0);
 
-  // --- INTRO CONTROL ---
-  if (!introDone) {
-    return <CinematicIntro onDone={() => setIntroDone(true)} />;
-  }
+  // --- ALL EFFECTS FIRST (FIXED ORDER) ---
 
-  // --- Countdown ---
   useEffect(() => {
     const interval = setInterval(() => {
       const diff = weddingDate.getTime() - Date.now();
@@ -254,7 +247,6 @@ export default function WeddingInvitation() {
     return () => clearInterval(interval);
   }, []);
 
-  // Quotes
   useEffect(() => {
     const interval = setInterval(() => {
       setQuoteIndex((prev) => (prev + 1) % quotes.length);
@@ -263,7 +255,6 @@ export default function WeddingInvitation() {
     return () => clearInterval(interval);
   }, []);
 
-  // Fireworks
   useEffect(() => {
     if (!opened) return;
 
@@ -284,6 +275,7 @@ export default function WeddingInvitation() {
     return () => clearInterval(interval);
   }, [opened]);
 
+  // --- ACTIONS ---
   const openInvitation = () => {
     setOpened(true);
     setShowPetals(true);
@@ -314,31 +306,31 @@ export default function WeddingInvitation() {
     setIsPlaying(!isPlaying);
   };
 
+  // --- SAFE CONDITIONAL RENDER (AFTER HOOKS) ---
+  if (!introDone) {
+    return <CinematicIntro onDone={() => setIntroDone(true)} />;
+  }
+
   const title = "Dhilip & Partner";
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-pink-50 via-purple-50 to-purple-100 text-gray-800">
 
-      {/* Glow */}
       {Array.from({ length: 6 }).map((_, i) => (
         <Glow key={i} />
       ))}
 
-      {/* Fireworks */}
       {fireworks.map((fw) => (
         <Firework key={fw.id} x={fw.x} y={fw.y} />
       ))}
 
-      {/* Petals */}
       {showPetals &&
         Array.from({ length: 25 }).map((_, i) => <Petal key={i} />)}
 
-      {/* Audio */}
       <audio ref={audioRef} loop>
         <source src={MUSIC_URL} />
       </audio>
 
-      {/* Music Button */}
       {opened && (
         <button
           onClick={toggleMusic}
@@ -348,7 +340,6 @@ export default function WeddingInvitation() {
         </button>
       )}
 
-      {/* MAIN UI (UNCHANGED) */}
       <section className="h-screen flex items-center justify-center px-6 text-center relative z-10">
         <AnimatePresence mode="wait">
           {!opened ? (
@@ -387,10 +378,7 @@ export default function WeddingInvitation() {
                 {quotes[quoteIndex]}
               </motion.p>
 
-              <motion.div
-                variants={fadeItem}
-                className="flex justify-center gap-6 mt-8 flex-wrap"
-              >
+              <motion.div className="flex justify-center gap-6 mt-8 flex-wrap">
                 <FlipUnit value={timeLeft.d} label="Days" />
                 <FlipUnit value={timeLeft.h} label="Hours" />
                 <FlipUnit value={timeLeft.m} label="Minutes" />
