@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 
 // ---------------- CONFIG ----------------
 const weddingDate = new Date("2026-05-20T10:00:00");
@@ -11,21 +11,15 @@ const couple = {
   groom: "Dhilip",
 };
 
-// ✅ ADDED LOCATION
+// LOCATION
 const eventDetails = {
   date: "20 May 2026",
   time: "10:00 AM",
   location: "Kattur, Tamil Nadu",
+  mapEmbed:
+    "https://www.google.com/maps?q=Kattur,Tamil+Nadu&output=embed",
 };
 
-const timeline = [
-  { title: "We Met", desc: "A beautiful coincidence turned destiny." },
-  { title: "First Talk", desc: "Endless conversations began." },
-  { title: "Love Grew", desc: "Every moment became special." },
-  { title: "Forever", desc: "Now we begin our forever." },
-];
-
-// ✅ ADDED GALLERY
 const gallery = ["/w1.jpeg", "/w2.jpeg", "/w3.jpeg", "/w4.jpeg"];
 
 // ---------------- UTIL ----------------
@@ -108,11 +102,8 @@ export default function WeddingPage() {
   useEffect(() => {
     if (!audioRef.current) return;
 
-    if (music) {
-      audioRef.current.play().catch(() => {});
-    } else {
-      audioRef.current.pause();
-    }
+    if (music) audioRef.current.play().catch(() => {});
+    else audioRef.current.pause();
   }, [music]);
 
   const openInvitation = () => {
@@ -134,6 +125,9 @@ export default function WeddingPage() {
       });
     } catch {}
   };
+
+  // PARALLAX HOOK (gallery scroll)
+  const { scrollYProgress } = useScroll();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-rose-50 text-gray-800 overflow-x-hidden">
@@ -218,8 +212,7 @@ export default function WeddingPage() {
                       Wedding Invitation
                     </h2>
                     <p className="opacity-80">
-                      With joyful hearts, we invite you to celebrate our union and
-                      bless our journey of love.
+                      With joyful hearts, we invite you to celebrate our union and bless our journey of love.
                     </p>
                   </section>
 
@@ -238,22 +231,36 @@ export default function WeddingPage() {
                         📍 {eventDetails.location}
                       </div>
                     </div>
+
+                    {/* 🗺️ GOOGLE MAP */}
+                    <div className="mt-6 px-4">
+                      <iframe
+                        src={eventDetails.mapEmbed}
+                        className="w-full h-64 rounded-2xl shadow-lg border-0"
+                        loading="lazy"
+                      />
+                    </div>
                   </section>
 
-                  {/* ✅ ADDED GALLERY */}
+                  {/* GALLERY + PARALLAX */}
                   <section className="py-16 text-center">
                     <h2 className="text-2xl font-serif mb-6">Our Memories</h2>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-4">
-                      {gallery.map((img, i) => (
-                        <motion.img
-                          key={i}
-                          src={img}
-                          alt={`gallery-${i}`}
-                          className="rounded-2xl shadow-lg object-cover w-full h-40 md:h-48"
-                          whileHover={{ scale: 1.05 }}
-                        />
-                      ))}
+                      {gallery.map((img, i) => {
+                        const y = useTransform(scrollYProgress, [0, 1], [0, i % 2 === 0 ? 40 : -40]);
+
+                        return (
+                          <motion.img
+                            key={i}
+                            src={img}
+                            alt={`gallery-${i}`}
+                            className="rounded-2xl shadow-lg object-cover w-full h-40 md:h-48"
+                            style={{ y }}
+                            whileHover={{ scale: 1.05 }}
+                          />
+                        );
+                      })}
                     </div>
                   </section>
 
