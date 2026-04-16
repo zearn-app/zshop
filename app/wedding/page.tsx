@@ -11,12 +11,22 @@ const couple = {
   groom: "Dhilip",
 };
 
+// ✅ ADDED LOCATION
+const eventDetails = {
+  date: "20 May 2026",
+  time: "10:00 AM",
+  location: "Kattur, Tamil Nadu",
+};
+
 const timeline = [
   { title: "We Met", desc: "A beautiful coincidence turned destiny." },
   { title: "First Talk", desc: "Endless conversations began." },
   { title: "Love Grew", desc: "Every moment became special." },
   { title: "Forever", desc: "Now we begin our forever." },
 ];
+
+// ✅ ADDED GALLERY
+const gallery = ["/w1.jpeg", "/w2.jpeg", "/w3.jpeg", "/w4.jpeg"];
 
 // ---------------- UTIL ----------------
 function getTimeLeft() {
@@ -58,9 +68,7 @@ function EnvelopeIntro({ onOpen }: { onOpen: () => void }) {
           WEDDING INVITATION
         </p>
 
-        <p className="mt-6 text-white/60 text-sm">
-          Tap to open ✨
-        </p>
+        <p className="mt-6 text-white/60 text-sm">Tap to open ✨</p>
       </motion.div>
     </motion.div>
   );
@@ -97,7 +105,6 @@ export default function WeddingPage() {
     return () => clearInterval(t);
   }, []);
 
-  // AUTO MUSIC CONTROL
   useEffect(() => {
     if (!audioRef.current) return;
 
@@ -110,7 +117,7 @@ export default function WeddingPage() {
 
   const openInvitation = () => {
     setIntro(false);
-    setMusic(true); // ✅ auto play on open
+    setMusic(true);
 
     setTimeout(() => {
       setOpened(true);
@@ -136,7 +143,7 @@ export default function WeddingPage() {
         {intro && <EnvelopeIntro onOpen={openInvitation} />}
       </AnimatePresence>
 
-      {/* BACKGROUND FLOATING HEARTS */}
+      {/* FLOATING HEARTS */}
       {Array.from({ length: 15 }).map((_, i) => (
         <motion.div
           key={i}
@@ -168,7 +175,6 @@ export default function WeddingPage() {
       {/* MAIN CONTENT */}
       {opened && (
         <div className="p-4 flex flex-col gap-10">
-
           <AnimatePresence>
             {paperOpen && (
               <motion.div
@@ -177,7 +183,7 @@ export default function WeddingPage() {
               >
                 <PaperUnfold>
 
-                  {/* HERO (NO EMPTY FULL SCREEN) */}
+                  {/* HERO */}
                   <section className="py-16 text-center">
                     <h1 className="text-4xl md:text-6xl font-serif">
                       {couple.groom} ❤️ {couple.bride}
@@ -223,14 +229,31 @@ export default function WeddingPage() {
 
                     <div className="flex flex-wrap justify-center gap-4">
                       <div className="bg-white/70 p-4 rounded-2xl shadow">
-                        📅 20 May 2026
+                        📅 {eventDetails.date}
                       </div>
                       <div className="bg-white/70 p-4 rounded-2xl shadow">
-                        ⏰ 10:00 AM
+                        ⏰ {eventDetails.time}
                       </div>
                       <div className="bg-white/70 p-4 rounded-2xl shadow">
-                        📍 Tamil Nadu
+                        📍 {eventDetails.location}
                       </div>
+                    </div>
+                  </section>
+
+                  {/* ✅ ADDED GALLERY */}
+                  <section className="py-16 text-center">
+                    <h2 className="text-2xl font-serif mb-6">Our Memories</h2>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-4">
+                      {gallery.map((img, i) => (
+                        <motion.img
+                          key={i}
+                          src={img}
+                          alt={`gallery-${i}`}
+                          className="rounded-2xl shadow-lg object-cover w-full h-40 md:h-48"
+                          whileHover={{ scale: 1.05 }}
+                        />
+                      ))}
                     </div>
                   </section>
 
@@ -238,7 +261,6 @@ export default function WeddingPage() {
               </motion.div>
             )}
           </AnimatePresence>
-
         </div>
       )}
     </div>
