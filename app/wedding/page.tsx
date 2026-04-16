@@ -34,7 +34,7 @@ const loveMessages = [
 ];
 
 // Background Music (Romantic instrumental - replace with your preferred royalty-free track)
-const MUSIC_URL = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"; // Placeholder: replace with actual wedding song
+const MUSIC_URL = "https://open.spotify.com/track/6PBxTo9pMC9hy342yC580X?si=i_2e2rRRQ1eNv97M4G3jLA"; // Placeholder: replace with actual wedding song
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
