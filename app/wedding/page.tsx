@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 
 // ---------------- CONFIG ----------------
@@ -11,13 +11,11 @@ const couple = {
   groom: "Dhilip",
 };
 
-// LOCATION
 const eventDetails = {
   date: "20 May 2026",
   time: "10:00 AM",
   location: "Kattur, Tamil Nadu",
-  mapEmbed:
-    "https://www.google.com/maps?q=Kattur,Tamil+Nadu&output=embed",
+  mapEmbed: "https://www.google.com/maps?q=Kattur,Tamil+Nadu&output=embed",
 };
 
 const gallery = ["/w1.jpeg", "/w2.jpeg", "/w3.jpeg", "/w4.jpeg"];
@@ -83,6 +81,23 @@ function PaperUnfold({ children }: { children: React.ReactNode }) {
   );
 }
 
+// ---------------- FLIP COUNTDOWN CARD ----------------
+function FlipNumber({ value }: { value: number }) {
+  return (
+    <div className="relative w-20 h-24 perspective-1000">
+      <motion.div
+        key={value}
+        initial={{ rotateX: -90, opacity: 0 }}
+        animate={{ rotateX: 0, opacity: 1 }}
+        transition={{ duration: 0.6 }}
+        className="absolute inset-0 flex items-center justify-center bg-white/80 rounded-xl shadow text-2xl font-bold"
+      >
+        {value}
+      </motion.div>
+    </div>
+  );
+}
+
 // ---------------- MAIN ----------------
 export default function WeddingPage() {
   const [time, setTime] = useState(getTimeLeft());
@@ -101,9 +116,7 @@ export default function WeddingPage() {
 
   useEffect(() => {
     if (!audioRef.current) return;
-
-    if (music) audioRef.current.play().catch(() => {});
-    else audioRef.current.pause();
+    music ? audioRef.current.play().catch(() => {}) : audioRef.current.pause();
   }, [music]);
 
   const openInvitation = () => {
@@ -126,8 +139,16 @@ export default function WeddingPage() {
     } catch {}
   };
 
-  // PARALLAX HOOK (gallery scroll)
   const { scrollYProgress } = useScroll();
+
+  // SAFE PARALLAX VALUES (no hooks inside loop)
+  const yTransforms = useMemo(
+    () =>
+      gallery.map((_, i) =>
+        useTransform(scrollYProgress, [0, 1], [0, i % 2 === 0 ? 40 : -40])
+      ),
+    [scrollYProgress]
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-rose-50 text-gray-800 overflow-x-hidden">
@@ -166,15 +187,12 @@ export default function WeddingPage() {
         <source src="/music.mp3" />
       </audio>
 
-      {/* MAIN CONTENT */}
+      {/* MAIN */}
       {opened && (
         <div className="p-4 flex flex-col gap-10">
           <AnimatePresence>
             {paperOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: 40 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
+              <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }}>
                 <PaperUnfold>
 
                   {/* HERO */}
@@ -187,20 +205,15 @@ export default function WeddingPage() {
                     </p>
                   </section>
 
-                  {/* COUNTDOWN */}
+                  {/* FLIP COUNTDOWN */}
                   <section className="py-16 text-center">
-                    <h2 className="text-2xl font-serif mb-6">
-                      Countdown to Forever
-                    </h2>
+                    <h2 className="text-2xl font-serif mb-6">Countdown to Forever</h2>
 
-                    <div className="flex flex-wrap justify-center gap-4 text-xl">
+                    <div className="flex flex-wrap justify-center gap-4">
                       {Object.entries(time).map(([k, v]) => (
-                        <div
-                          key={k}
-                          className="bg-white/70 px-4 py-3 rounded-xl shadow"
-                        >
-                          <div className="text-2xl font-bold">{v}</div>
-                          <div className="text-xs uppercase">{k}</div>
+                        <div key={k} className="text-center">
+                          <FlipNumber value={v} />
+                          <div className="text-xs mt-2 uppercase">{k}</div>
                         </div>
                       ))}
                     </div>
@@ -208,9 +221,7 @@ export default function WeddingPage() {
 
                   {/* INVITATION */}
                   <section className="py-16 text-center max-w-2xl mx-auto">
-                    <h2 className="text-2xl font-serif mb-4">
-                      Wedding Invitation
-                    </h2>
+                    <h2 className="text-2xl font-serif mb-4">Wedding Invitation</h2>
                     <p className="opacity-80">
                       With joyful hearts, we invite you to celebrate our union and bless our journey of love.
                     </p>
@@ -221,18 +232,11 @@ export default function WeddingPage() {
                     <h2 className="text-2xl font-serif mb-6">Event Details</h2>
 
                     <div className="flex flex-wrap justify-center gap-4">
-                      <div className="bg-white/70 p-4 rounded-2xl shadow">
-                        📅 {eventDetails.date}
-                      </div>
-                      <div className="bg-white/70 p-4 rounded-2xl shadow">
-                        ⏰ {eventDetails.time}
-                      </div>
-                      <div className="bg-white/70 p-4 rounded-2xl shadow">
-                        📍 {eventDetails.location}
-                      </div>
+                      <div className="bg-white/70 p-4 rounded-2xl shadow">📅 {eventDetails.date}</div>
+                      <div className="bg-white/70 p-4 rounded-2xl shadow">⏰ {eventDetails.time}</div>
+                      <div className="bg-white/70 p-4 rounded-2xl shadow">📍 {eventDetails.location}</div>
                     </div>
 
-                    {/* 🗺️ GOOGLE MAP */}
                     <div className="mt-6 px-4">
                       <iframe
                         src={eventDetails.mapEmbed}
@@ -242,25 +246,25 @@ export default function WeddingPage() {
                     </div>
                   </section>
 
-                  {/* GALLERY + PARALLAX */}
+                  {/* 3D FLIP GALLERY */}
                   <section className="py-16 text-center">
                     <h2 className="text-2xl font-serif mb-6">Our Memories</h2>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-4">
-                      {gallery.map((img, i) => {
-                        const y = useTransform(scrollYProgress, [0, 1], [0, i % 2 === 0 ? 40 : -40]);
-
-                        return (
+                      {gallery.map((img, i) => (
+                        <motion.div
+                          key={i}
+                          whileHover={{ rotateY: 15, rotateX: 10, scale: 1.05 }}
+                          transition={{ type: "spring", stiffness: 120 }}
+                          className="perspective-1000"
+                        >
                           <motion.img
-                            key={i}
                             src={img}
-                            alt={`gallery-${i}`}
+                            style={{ y: yTransforms[i] }}
                             className="rounded-2xl shadow-lg object-cover w-full h-40 md:h-48"
-                            style={{ y }}
-                            whileHover={{ scale: 1.05 }}
                           />
-                        );
-                      })}
+                        </motion.div>
+                      ))}
                     </div>
                   </section>
 
