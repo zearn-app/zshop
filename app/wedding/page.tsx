@@ -39,7 +39,6 @@ function EnvelopeIntro({ onOpen }: { onOpen: () => void }) {
       initial={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      {/* glowing orbs */}
       {Array.from({ length: 6 }).map((_, i) => (
         <motion.div
           key={i}
@@ -61,13 +60,11 @@ function EnvelopeIntro({ onOpen }: { onOpen: () => void }) {
         />
       ))}
 
-      {/* envelope */}
       <motion.div
         className="text-center z-10 cursor-pointer"
         initial={{ scale: 0.6, opacity: 0, rotateX: 80 }}
         animate={{ scale: 1, opacity: 1, rotateX: 0 }}
         transition={{ duration: 1 }}
-        whileTap={{ scale: 0.95 }}
         onClick={onOpen}
       >
         <motion.div
@@ -86,13 +83,9 @@ function EnvelopeIntro({ onOpen }: { onOpen: () => void }) {
           WEDDING INVITATION
         </p>
 
-        <motion.div
-          className="mt-6 text-white/70 text-sm"
-          animate={{ opacity: [0.4, 1, 0.4] }}
-          transition={{ duration: 2, repeat: Infinity }}
-        >
+        <p className="mt-6 text-white/60 text-sm">
           Tap to open envelope ✨
-        </motion.div>
+        </p>
       </motion.div>
     </motion.div>
   );
@@ -105,7 +98,6 @@ export default function WeddingPage() {
   const [theme, setTheme] = useState("light");
   const [rsvp, setRsvp] = useState(false);
 
-  // NEW: intro control
   const [intro, setIntro] = useState(true);
   const [opened, setOpened] = useState(false);
 
@@ -125,7 +117,7 @@ export default function WeddingPage() {
     try {
       await navigator.share({
         title: "Wedding Invitation",
-        text: `${couple.groom} ❤️ ${couple.bride} Wedding Invitation`,
+        text: `${couple.groom} ❤️ ${couple.bride}`,
         url: window.location.href,
       });
     } catch {}
@@ -175,11 +167,7 @@ export default function WeddingPage() {
 
         <div className="flex gap-3">
           <button onClick={() => setMusic(!music)}>🎵</button>
-          <button
-            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-          >
-            🌓
-          </button>
+          <button onClick={() => setTheme(theme === "light" ? "dark" : "light")}>🌓</button>
           <button onClick={share}>🔗</button>
         </div>
       </div>
@@ -188,53 +176,66 @@ export default function WeddingPage() {
         <source src="/music.mp3" />
       </audio>
 
-      {/* HERO */}
+      {/* ========================= */}
+      {/* 🍏 APPLE STYLE SCROLL FLOW */}
+      {/* ========================= */}
+
       {opened && (
-        <>
+        <div className="relative">
+
+          {/* HERO SCENE */}
           <section className="h-screen flex flex-col items-center justify-center text-center px-4">
             <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1 }}
               className="text-5xl md:text-7xl font-serif"
             >
               {couple.groom} ❤️ {couple.bride}
             </motion.h1>
 
-            <p className="mt-4 text-lg italic opacity-80">
-              Two hearts, one soul, forever begins here
-            </p>
-
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              onClick={() => setRsvp(true)}
-              className="mt-6 px-6 py-3 rounded-full bg-pink-500 text-white shadow-lg"
+            <motion.p
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="mt-4 text-lg italic opacity-80"
             >
-              RSVP Now
-            </motion.button>
+              Two hearts, one soul, forever begins here
+            </motion.p>
           </section>
 
-          {/* COUNTDOWN */}
-          <section className="py-20 text-center">
-            <h2 className="text-3xl font-serif mb-6">
+          {/* COUNTDOWN SCENE */}
+          <section className="h-screen flex flex-col items-center justify-center text-center">
+            <motion.h2
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              className="text-3xl font-serif mb-6"
+            >
               Countdown to Forever
-            </h2>
+            </motion.h2>
 
-            <div className="flex justify-center gap-6 text-2xl">
+            <div className="flex gap-6 text-2xl">
               {Object.entries(time).map(([k, v]) => (
-                <div
+                <motion.div
                   key={k}
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  whileInView={{ scale: 1, opacity: 1 }}
                   className="bg-white/60 px-4 py-3 rounded-xl shadow"
                 >
                   <div className="text-3xl font-bold">{v}</div>
                   <div className="text-sm uppercase">{k}</div>
-                </div>
+                </motion.div>
               ))}
             </div>
           </section>
 
-          {/* INVITATION */}
-          <section className="max-w-3xl mx-auto p-6">
-            <div className="backdrop-blur-xl bg-white/60 p-10 rounded-3xl shadow-xl text-center">
+          {/* INVITATION SCENE */}
+          <section className="h-screen flex items-center justify-center px-6">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              className="backdrop-blur-xl bg-white/60 p-10 rounded-3xl shadow-xl text-center max-w-2xl"
+            >
               <h2 className="text-2xl font-serif mb-4">
                 Wedding Invitation
               </h2>
@@ -242,31 +243,39 @@ export default function WeddingPage() {
                 With joyful hearts, we invite you to celebrate our union and
                 bless our journey of love.
               </p>
-            </div>
+            </motion.div>
           </section>
 
-          {/* EVENT DETAILS */}
-          <section className="py-20 text-center">
-            <h2 className="text-3xl font-serif mb-6">Event Details</h2>
+          {/* EVENT SCENE */}
+          <section className="h-screen flex flex-col items-center justify-center text-center">
+            <motion.h2
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              className="text-3xl font-serif mb-6"
+            >
+              Event Details
+            </motion.h2>
 
-            <div className="flex flex-col md:flex-row justify-center gap-6">
-              <div className="bg-white/70 p-6 rounded-2xl shadow">
-                📅 20 May 2026
-              </div>
-              <div className="bg-white/70 p-6 rounded-2xl shadow">
-                ⏰ 10:00 AM
-              </div>
-              <div className="bg-white/70 p-6 rounded-2xl shadow">
-                📍 Wedding Hall, Tamil Nadu
-              </div>
-            </div>
+            <motion.div
+              className="flex flex-col md:flex-row gap-6"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+            >
+              <div className="bg-white/70 p-6 rounded-2xl shadow">📅 20 May 2026</div>
+              <div className="bg-white/70 p-6 rounded-2xl shadow">⏰ 10:00 AM</div>
+              <div className="bg-white/70 p-6 rounded-2xl shadow">📍 Tamil Nadu</div>
+            </motion.div>
           </section>
 
-          {/* GALLERY */}
-          <section className="py-20 px-6">
-            <h2 className="text-3xl text-center font-serif mb-10">
+          {/* GALLERY SCENE */}
+          <section className="min-h-screen py-20 px-6">
+            <motion.h2
+              className="text-3xl text-center font-serif mb-10"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+            >
               Gallery
-            </h2>
+            </motion.h2>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {gallery.map((img, i) => (
@@ -274,22 +283,28 @@ export default function WeddingPage() {
                   key={i}
                   src={img}
                   className="rounded-2xl shadow-lg hover:scale-105 transition-transform"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
                 />
               ))}
             </div>
           </section>
 
-          {/* LOVE STORY */}
-          <section className="py-20 max-w-3xl mx-auto">
-            <h2 className="text-3xl text-center font-serif mb-10">
+          {/* STORY SCENE */}
+          <section className="min-h-screen py-20 max-w-3xl mx-auto">
+            <motion.h2
+              className="text-3xl text-center font-serif mb-10"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+            >
               Our Story
-            </h2>
+            </motion.h2>
 
             <div className="space-y-6">
               {timeline.map((t, i) => (
                 <motion.div
                   key={i}
-                  initial={{ opacity: 0, x: i % 2 === 0 ? -50 : 50 }}
+                  initial={{ opacity: 0, x: i % 2 ? 50 : -50 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   className="bg-white/60 p-6 rounded-xl shadow"
                 >
@@ -308,37 +323,26 @@ export default function WeddingPage() {
           {/* RSVP MODAL */}
           <AnimatePresence>
             {rsvp && (
-              <motion.div
-                className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-              >
+              <motion.div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                 <motion.div
                   className="bg-white p-8 rounded-2xl w-80 text-center"
                   initial={{ scale: 0.8 }}
                   animate={{ scale: 1 }}
                 >
                   <h2 className="text-xl mb-4">RSVP</h2>
-                  <input
-                    className="border p-2 w-full mb-3"
-                    placeholder="Your Name"
-                  />
+                  <input className="border p-2 w-full mb-3" placeholder="Your Name" />
                   <button className="bg-pink-500 text-white px-4 py-2 rounded-full w-full">
                     Confirm
                   </button>
-
-                  <button
-                    onClick={() => setRsvp(false)}
-                    className="mt-3 text-sm opacity-70"
-                  >
+                  <button onClick={() => setRsvp(false)} className="mt-3 text-sm opacity-70">
                     Close
                   </button>
                 </motion.div>
               </motion.div>
             )}
           </AnimatePresence>
-        </>
+
+        </div>
       )}
     </div>
   );
