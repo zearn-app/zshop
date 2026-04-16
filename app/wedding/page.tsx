@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useMemo } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 
 // ---------------- CONFIG ----------------
@@ -81,16 +81,16 @@ function PaperUnfold({ children }: { children: React.ReactNode }) {
   );
 }
 
-// ---------------- FLIP COUNTDOWN CARD ----------------
-function FlipNumber({ value }: { value: number }) {
+// ---------------- FLIP CARD (COUNTDOWN) ----------------
+function FlipCard({ value }: { value: number }) {
   return (
-    <div className="relative w-20 h-24 perspective-1000">
+    <div className="w-20 h-24 perspective-1000">
       <motion.div
         key={value}
         initial={{ rotateX: -90, opacity: 0 }}
         animate={{ rotateX: 0, opacity: 1 }}
-        transition={{ duration: 0.6 }}
-        className="absolute inset-0 flex items-center justify-center bg-white/80 rounded-xl shadow text-2xl font-bold"
+        transition={{ duration: 0.5 }}
+        className="w-full h-full flex items-center justify-center bg-white/80 rounded-xl shadow text-2xl font-bold"
       >
         {value}
       </motion.div>
@@ -139,16 +139,9 @@ export default function WeddingPage() {
     } catch {}
   };
 
+  // SAFE SINGLE PARALLAX (no loop hooks)
   const { scrollYProgress } = useScroll();
-
-  // SAFE PARALLAX VALUES (no hooks inside loop)
-  const yTransforms = useMemo(
-    () =>
-      gallery.map((_, i) =>
-        useTransform(scrollYProgress, [0, 1], [0, i % 2 === 0 ? 40 : -40])
-      ),
-    [scrollYProgress]
-  );
+  const globalY = useTransform(scrollYProgress, [0, 1], [0, -30]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-rose-50 text-gray-800 overflow-x-hidden">
@@ -190,6 +183,7 @@ export default function WeddingPage() {
       {/* MAIN */}
       {opened && (
         <div className="p-4 flex flex-col gap-10">
+
           <AnimatePresence>
             {paperOpen && (
               <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }}>
@@ -207,12 +201,14 @@ export default function WeddingPage() {
 
                   {/* FLIP COUNTDOWN */}
                   <section className="py-16 text-center">
-                    <h2 className="text-2xl font-serif mb-6">Countdown to Forever</h2>
+                    <h2 className="text-2xl font-serif mb-6">
+                      Countdown to Forever
+                    </h2>
 
                     <div className="flex flex-wrap justify-center gap-4">
                       {Object.entries(time).map(([k, v]) => (
                         <div key={k} className="text-center">
-                          <FlipNumber value={v} />
+                          <FlipCard value={v} />
                           <div className="text-xs mt-2 uppercase">{k}</div>
                         </div>
                       ))}
@@ -246,32 +242,37 @@ export default function WeddingPage() {
                     </div>
                   </section>
 
-                  {/* 3D FLIP GALLERY */}
+                  {/* 3D GALLERY (SAFE PARALLAX) */}
                   <section className="py-16 text-center">
                     <h2 className="text-2xl font-serif mb-6">Our Memories</h2>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-4">
-                      {gallery.map((img, i) => (
-                        <motion.div
-                          key={i}
-                          whileHover={{ rotateY: 15, rotateX: 10, scale: 1.05 }}
-                          transition={{ type: "spring", stiffness: 120 }}
-                          className="perspective-1000"
-                        >
-                          <motion.img
-                            src={img}
-                            style={{ y: yTransforms[i] }}
-                            className="rounded-2xl shadow-lg object-cover w-full h-40 md:h-48"
-                          />
-                        </motion.div>
-                      ))}
-                    </div>
+                    <motion.div style={{ y: globalY }}>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-4">
+                        {gallery.map((img, i) => (
+                          <motion.div
+                            key={i}
+                            whileHover={{
+                              rotateX: 10,
+                              rotateY: 15,
+                              scale: 1.05,
+                            }}
+                            className="perspective-1000"
+                          >
+                            <img
+                              src={img}
+                              className="rounded-2xl shadow-lg object-cover w-full h-40 md:h-48"
+                            />
+                          </motion.div>
+                        ))}
+                      </div>
+                    </motion.div>
                   </section>
 
                 </PaperUnfold>
               </motion.div>
             )}
           </AnimatePresence>
+
         </div>
       )}
     </div>
