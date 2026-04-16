@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import mojs from "@mojs/core";
-////hjnb///
+////hjn///
 export default function LovePage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const soundRef = useRef<HTMLDivElement>(null);
