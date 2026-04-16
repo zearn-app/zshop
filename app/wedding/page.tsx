@@ -42,6 +42,7 @@ function EnvelopeIntro({ onOpen }: { onOpen: () => void }) {
         className="text-center cursor-pointer"
         initial={{ scale: 0.7, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.8 }}
         onClick={onOpen}
       >
         <motion.div
@@ -52,15 +53,32 @@ function EnvelopeIntro({ onOpen }: { onOpen: () => void }) {
           💌
         </motion.div>
 
-        <h1 className="text-white text-3xl mt-4 font-serif">
+        <motion.h1
+          className="text-white text-3xl mt-4 font-serif"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
           {couple.groom} & {couple.bride}
-        </h1>
+        </motion.h1>
 
-        <p className="text-purple-300 mt-2 tracking-[0.3em] text-sm">
+        <motion.p
+          className="text-purple-300 mt-2 tracking-[0.3em] text-sm"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
           WEDDING INVITATION
-        </p>
+        </motion.p>
 
-        <p className="mt-6 text-white/60 text-sm">Tap to open ✨</p>
+        <motion.p
+          className="mt-6 text-white/60 text-sm"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.7 }}
+        >
+          Tap to open ✨
+        </motion.p>
       </motion.div>
     </motion.div>
   );
@@ -98,8 +116,8 @@ function FlipCard({ value }: { value: number }) {
   );
 }
 
-// ---------------- SECTION WRAPPER (NETFLIX STYLE) ----------------
-function StorySection({ children, index }: any) {
+// ---------------- SECTION WRAPPER ----------------
+function StorySection({ children }: any) {
   return (
     <motion.section
       initial={{ opacity: 0, scale: 0.95, y: 80 }}
@@ -110,6 +128,20 @@ function StorySection({ children, index }: any) {
     >
       {children}
     </motion.section>
+  );
+}
+
+// ---------------- TEXT ANIMATION WRAPPER (NEW) ----------------
+function FadeText({ children }: any) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+      viewport={{ once: true }}
+    >
+      {children}
+    </motion.div>
   );
 }
 
@@ -203,32 +235,49 @@ export default function WeddingPage() {
               <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }}>
                 <PaperUnfold>
 
-                  {/* 🎬 NETFLIX STORY MODE HEADER */}
+                  {/* HEADER */}
                   <motion.div
                     className="text-center py-20"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ duration: 1 }}
                   >
-                    <h1 className="text-5xl md:text-6xl font-serif">
+                    <motion.h1
+                      className="text-5xl md:text-6xl font-serif"
+                      animate={{ scale: [1, 1.02, 1] }}
+                      transition={{ duration: 4, repeat: Infinity }}
+                    >
                       A Love Story
-                    </h1>
-                    <p className="mt-2 opacity-70">Scroll to experience our journey</p>
+                    </motion.h1>
+
+                    <FadeText>
+                      <p className="mt-2 opacity-70">
+                        Scroll to experience our journey
+                      </p>
+                    </FadeText>
                   </motion.div>
 
                   {/* HERO */}
                   <StorySection>
-                    <h1 className="text-4xl md:text-6xl font-serif">
-                      {couple.groom} ❤️ {couple.bride}
-                    </h1>
-                    <p className="mt-4 italic opacity-80">
-                      Two hearts, one soul, forever begins here
-                    </p>
+                    <FadeText>
+                      <h1 className="text-4xl md:text-6xl font-serif">
+                        {couple.groom} ❤️ {couple.bride}
+                      </h1>
+                    </FadeText>
+
+                    <FadeText>
+                      <p className="mt-4 italic opacity-80">
+                        Two hearts, one soul, forever begins here
+                      </p>
+                    </FadeText>
                   </StorySection>
 
                   {/* COUNTDOWN */}
                   <StorySection>
-                    <h2 className="text-2xl font-serif mb-6">Countdown to Forever</h2>
+                    <FadeText>
+                      <h2 className="text-2xl font-serif mb-6">
+                        Countdown to Forever
+                      </h2>
+                    </FadeText>
 
                     <div className="flex flex-wrap justify-center gap-4">
                       {Object.entries(time).map(([k, v]) => (
@@ -242,34 +291,52 @@ export default function WeddingPage() {
 
                   {/* INVITATION */}
                   <StorySection>
-                    <h2 className="text-2xl font-serif mb-4">Wedding Invitation</h2>
-                    <p className="opacity-80 max-w-xl mx-auto">
-                      With joyful hearts, we invite you to celebrate our union and bless our journey of love.
-                    </p>
+                    <FadeText>
+                      <h2 className="text-2xl font-serif mb-4">
+                        Wedding Invitation
+                      </h2>
+                    </FadeText>
+
+                    <FadeText>
+                      <p className="opacity-80 max-w-xl mx-auto">
+                        With joyful hearts, we invite you to celebrate our union and bless our journey of love.
+                      </p>
+                    </FadeText>
                   </StorySection>
 
                   {/* EVENT */}
                   <StorySection>
-                    <h2 className="text-2xl font-serif mb-6">Event Details</h2>
+                    <FadeText>
+                      <h2 className="text-2xl font-serif mb-6">Event Details</h2>
+                    </FadeText>
 
                     <div className="flex flex-wrap justify-center gap-4">
-                      <div className="bg-white/70 p-4 rounded-2xl shadow">📅 {eventDetails.date}</div>
-                      <div className="bg-white/70 p-4 rounded-2xl shadow">⏰ {eventDetails.time}</div>
-                      <div className="bg-white/70 p-4 rounded-2xl shadow">📍 {eventDetails.location}</div>
+                      {["📅", "⏰", "📍"].map((icon, i) => (
+                        <FadeText key={i}>
+                          <div className="bg-white/70 p-4 rounded-2xl shadow">
+                            {icon}{" "}
+                            {[eventDetails.date, eventDetails.time, eventDetails.location][i]}
+                          </div>
+                        </FadeText>
+                      ))}
                     </div>
 
-                    <div className="mt-6 px-4">
-                      <iframe
-                        src={eventDetails.mapEmbed}
-                        className="w-full h-64 rounded-2xl shadow-lg border-0"
-                        loading="lazy"
-                      />
-                    </div>
+                    <FadeText>
+                      <div className="mt-6 px-4">
+                        <iframe
+                          src={eventDetails.mapEmbed}
+                          className="w-full h-64 rounded-2xl shadow-lg border-0"
+                          loading="lazy"
+                        />
+                      </div>
+                    </FadeText>
                   </StorySection>
 
-                  {/* GALLERY STORY ENDING */}
+                  {/* GALLERY */}
                   <StorySection>
-                    <h2 className="text-2xl font-serif mb-6">Our Memories</h2>
+                    <FadeText>
+                      <h2 className="text-2xl font-serif mb-6">Our Memories</h2>
+                    </FadeText>
 
                     <motion.div style={{ y: globalY }}>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-4">
@@ -277,6 +344,8 @@ export default function WeddingPage() {
                           <motion.img
                             key={i}
                             whileHover={{ scale: 1.05 }}
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
                             src={img}
                             className="rounded-2xl shadow-lg object-cover w-full h-40 md:h-48"
                           />
@@ -285,7 +354,7 @@ export default function WeddingPage() {
                     </motion.div>
                   </StorySection>
 
-                  {/* END CREDIT (NETFLIX STYLE) */}
+                  {/* END */}
                   <motion.div
                     className="py-20 text-center text-xl opacity-70"
                     initial={{ opacity: 0 }}
