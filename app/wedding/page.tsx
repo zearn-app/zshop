@@ -495,12 +495,23 @@ const FloatingStar = ({ isDark, index }: { isDark: boolean; index: number }) => 
   />
 );
 
-const FloatingPetal = ({ isDark, delay, index }: { isDark: boolean; delay: number; index: number }) => {
+const FloatingPetal = ({
+  isDark,
+  delay,
+  index,
+}: {
+  isDark: boolean;
+  delay: number;
+  index: number;
+}) => {
   const sideWays = useMotionValue(Math.random() * 140 - 70);
 
   return (
     <motion.div
       className="fixed text-4xl z-50 pointer-events-none select-none"
+      style={{
+        x: sideWays, // ✅ FIX: move MotionValue here
+      }}
       initial={{
         y: "-8vh",
         x: (Math.random() - 0.5) * 60 + "vw",
@@ -509,7 +520,6 @@ const FloatingPetal = ({ isDark, delay, index }: { isDark: boolean; delay: numbe
       }}
       animate={{
         y: "108vh",
-        x: sideWays,
         rotate: [0, 180 + Math.random() * 360],
         opacity: [0, 1, 0.9, 0],
       }}
