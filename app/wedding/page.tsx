@@ -22,19 +22,16 @@ const fadeContainer: Variants = {
   visible: { opacity: 1, transition: { staggerChildren: 0.2 } },
 };
 
-const fadeItem: Variants = {
-  hidden: { opacity: 0, y: 50 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.7, ease: "easeOut" },
-  },
-};
-
-// --- CINEMATIC INTRO ---
-function CinematicIntro({ onDone }: { onDone: () => void }) {
+// --- CINEMATIC INTRO (UPDATED) ---
+function CinematicIntro({
+  onDone,
+  onEnter,
+}: {
+  onDone: () => void;
+  onEnter: () => void;
+}) {
   useEffect(() => {
-    const t = setTimeout(onDone, 3200);
+    const t = setTimeout(onDone, 1000000); // keeps intro alive until user clicks
     return () => clearTimeout(t);
   }, [onDone]);
 
@@ -71,6 +68,7 @@ function CinematicIntro({ onDone }: { onDone: () => void }) {
         className="absolute w-[200px] h-full bg-white/10 blur-2xl rotate-12"
       />
 
+      {/* TITLE */}
       <motion.div className="text-center z-10">
         <motion.h1
           initial={{ opacity: 0, scale: 0.8, letterSpacing: "0.5em" }}
@@ -81,19 +79,25 @@ function CinematicIntro({ onDone }: { onDone: () => void }) {
           DHILIP
         </motion.h1>
 
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8, duration: 1 }}
-          className="text-purple-300 mt-3 tracking-[0.4em] text-sm md:text-base"
-        >
+        <motion.div className="text-purple-300 mt-3 tracking-[0.4em] text-sm md:text-base">
           WEDDING INVITATION
         </motion.div>
+
+        {/* 👇 NEW BUTTON */}
+        <motion.button
+          onClick={onEnter}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.2 }}
+          className="mt-8 px-8 py-3 bg-purple-500 hover:bg-purple-600 text-white rounded-full shadow-xl transition-all"
+        >
+          View Invitation 💌
+        </motion.button>
 
         <motion.div
           initial={{ scaleX: 0 }}
           animate={{ scaleX: 1 }}
-          transition={{ delay: 1.2, duration: 1 }}
+          transition={{ delay: 1.5, duration: 1 }}
           className="h-[2px] bg-gradient-to-r from-transparent via-purple-400 to-transparent mt-6"
         />
       </motion.div>
@@ -177,43 +181,6 @@ function Petal() {
   );
 }
 
-// --- FLIP DIGIT ---
-function FlipDigit({ value }: { value: string }) {
-  return (
-    <div className="relative w-12 h-16 perspective">
-      <AnimatePresence mode="popLayout">
-        <motion.div
-          key={value}
-          initial={{ rotateX: -90, opacity: 0 }}
-          animate={{ rotateX: 0, opacity: 1 }}
-          exit={{ rotateX: 90, opacity: 0 }}
-          transition={{ duration: 0.6 }}
-          className="absolute inset-0 bg-white rounded-xl flex items-center justify-center text-3xl font-bold text-purple-700 shadow-md"
-        >
-          {value}
-        </motion.div>
-      </AnimatePresence>
-    </div>
-  );
-}
-
-// --- FLIP UNIT ---
-function FlipUnit({ value, label }: { value: number; label: string }) {
-  const str = value.toString().padStart(2, "0");
-
-  return (
-    <div className="flex flex-col items-center">
-      <div className="flex gap-1">
-        <FlipDigit value={str[0]} />
-        <FlipDigit value={str[1]} />
-      </div>
-      <span className="text-xs mt-2 text-purple-400 uppercase tracking-widest">
-        {label}
-      </span>
-    </div>
-  );
-}
-
 // --- MAIN COMPONENT ---
 export default function WeddingInvitation() {
   const [introDone, setIntroDone] = useState(false);
@@ -229,8 +196,17 @@ export default function WeddingInvitation() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const fireworkId = useRef(0);
 
-  // --- ALL EFFECTS FIRST (FIXED ORDER) ---
+  // --- INTRO CONTROL (UPDATED) ---
+  if (!introDone) {
+    return (
+      <CinematicIntro
+        onDone={() => setIntroDone(true)}
+        onEnter={() => setIntroDone(true)} // 👈 button triggers entry
+      />
+    );
+  }
 
+  // --- EFFECTS ---
   useEffect(() => {
     const interval = setInterval(() => {
       const diff = weddingDate.getTime() - Date.now();
@@ -275,7 +251,7 @@ export default function WeddingInvitation() {
     return () => clearInterval(interval);
   }, [opened]);
 
-  // --- ACTIONS ---
+  // --- ACTION ---
   const openInvitation = () => {
     setOpened(true);
     setShowPetals(true);
@@ -306,11 +282,6 @@ export default function WeddingInvitation() {
     setIsPlaying(!isPlaying);
   };
 
-  // --- SAFE CONDITIONAL RENDER (AFTER HOOKS) ---
-  if (!introDone) {
-    return <CinematicIntro onDone={() => setIntroDone(true)} />;
-  }
-
   const title = "Dhilip & Partner";
 
   return (
@@ -340,22 +311,16 @@ export default function WeddingInvitation() {
         </button>
       )}
 
-      <section className="h-screen flex items-center justify-center px-6 text-center relative z-10">
-        <AnimatePresence mode="wait">
-          {!opened ? (
+      {/* FADE IN INVITATION */}
+      <AnimatePresence>
+        {opened && (
+          <motion.section
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1 }}
+            className="h-screen flex items-center justify-center px-6 text-center relative z-10"
+          >
             <motion.div
-              key="closed"
-              onClick={openInvitation}
-              className="cursor-pointer bg-white p-16 rounded-3xl shadow-2xl"
-            >
-              <div className="text-6xl mb-4">💌</div>
-              <h2 className="text-2xl text-purple-600">
-                Tap to Open Invitation
-              </h2>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="open"
               variants={fadeContainer}
               initial="hidden"
               animate="visible"
@@ -379,30 +344,15 @@ export default function WeddingInvitation() {
               </motion.p>
 
               <motion.div className="flex justify-center gap-6 mt-8 flex-wrap">
-                <FlipUnit value={timeLeft.d} label="Days" />
-                <FlipUnit value={timeLeft.h} label="Hours" />
-                <FlipUnit value={timeLeft.m} label="Minutes" />
-                <FlipUnit value={timeLeft.s} label="Seconds" />
+                <div>{timeLeft.d} Days</div>
+                <div>{timeLeft.h} Hours</div>
+                <div>{timeLeft.m} Minutes</div>
+                <div>{timeLeft.s} Seconds</div>
               </motion.div>
-
-              <motion.div className="mt-8 text-purple-700 space-y-2">
-                <p>📅 May 20, 2026</p>
-                <p>⏰ 10:00 AM onwards</p>
-                <p>📍 Wedding Hall, Your City</p>
-              </motion.div>
-
-              <motion.p className="mt-6 text-purple-600">
-                Your presence will make our day even more special.
-                We look forward to celebrating with you 💖
-              </motion.p>
-
-              <motion.p className="mt-6 text-sm text-purple-400">
-                With love & blessings 🙏
-              </motion.p>
             </motion.div>
-          )}
-        </AnimatePresence>
-      </section>
+          </motion.section>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
