@@ -11,7 +11,7 @@ const couple = {
   groom: "Dhilip",
 };
 
-const gallery = ["/w1.jpg", "/w2.jpg", "/w3.jpg", "/w4.jpg"];
+const gallery = ["/w1.jpeg", "/w2.jpeg", "/w3.jpeg", "/w4.jpeg"];
 
 const timeline = [
   { title: "We Met", desc: "A beautiful coincidence turned destiny." },
