@@ -14,7 +14,7 @@ const quotes = [
   "Forever starts with you ✨",
 ];
 
-const MUSIC_URL = "/anba-va-en-anba-va.mp3";
+const MUSIC_URL = "/music.mp3";
 
 // --- ANIMATIONS ---
 const fadeContainer: Variants = {
