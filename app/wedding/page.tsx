@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence, Variants } from "framer-motion";
+import { motion, AnimatePresence, Variants, useScroll, useTransform } from "framer-motion";
 
 // --- CONFIG ---
 const weddingDate = new Date("2026-05-20T10:00:00");
@@ -30,6 +30,41 @@ const fadeItem: Variants = {
     transition: { duration: 0.7, ease: "easeOut" },
   },
 };
+
+// --- 🎬 CINEMATIC STORY BLOCK ---
+function StoryBlock({
+  title,
+  text,
+  index,
+}: {
+  title: string;
+  text: string;
+  index: number;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["0 1", "1 0"],
+  });
+
+  const opacity = useTransform(scrollYProgress, [0, 0.5, 1], [0, 1, 0]);
+  const y = useTransform(scrollYProgress, [0, 1], [80, 0]);
+
+  return (
+    <motion.div
+      ref={ref}
+      style={{ opacity, y }}
+      className="min-h-screen flex items-center justify-center px-6 text-center relative"
+    >
+      <div className="max-w-xl bg-black/40 backdrop-blur-md text-white p-10 rounded-2xl shadow-2xl border border-white/10">
+        <h2 className="text-2xl md:text-3xl font-light tracking-wide mb-4">
+          {title}
+        </h2>
+        <p className="text-white/80">{text}</p>
+      </div>
+    </motion.div>
+  );
+}
 
 // --- ✨ GLOW PARTICLE ---
 function Glow() {
@@ -88,7 +123,7 @@ function Petal() {
 
   return (
     <motion.div
-      initial={{ y: -50, opacity: 0, rotate: 0 }}
+      initial={{ y: -50, opacity: 0 }}
       animate={{
         y: "110vh",
         opacity: 1,
@@ -146,7 +181,9 @@ function FlipUnit({ value, label }: { value: number; label: string }) {
 
 // --- MAIN ---
 export default function WeddingInvitation() {
+  const [introDone, setIntroDone] = useState(true); // kept simple (no UI change)
   const [opened, setOpened] = useState(false);
+
   const [timeLeft, setTimeLeft] = useState({ d: 0, h: 0, m: 0, s: 0 });
   const [quoteIndex, setQuoteIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -183,7 +220,7 @@ export default function WeddingInvitation() {
     return () => clearInterval(interval);
   }, []);
 
-  // 🎆 Continuous fireworks
+  // Fireworks
   useEffect(() => {
     if (!opened) return;
 
@@ -209,19 +246,8 @@ export default function WeddingInvitation() {
     setShowPetals(true);
 
     setTimeout(() => {
-      if (audioRef.current) {
-        audioRef.current.volume = 0;
-        audioRef.current.play().catch(() => {});
-        setIsPlaying(true);
-
-        // 🎵 Smooth fade-in
-        let vol = 0;
-        const fade = setInterval(() => {
-          if (vol >= 1) return clearInterval(fade);
-          vol += 0.05;
-          audioRef.current!.volume = vol;
-        }, 100);
-      }
+      audioRef.current?.play().catch(() => {});
+      setIsPlaying(true);
     }, 500);
   };
 
@@ -237,20 +263,36 @@ export default function WeddingInvitation() {
 
   const title = "Dhilip & Partner";
 
+  // --- CINEMATIC STORY TIMELINE ---
+  const story = [
+    {
+      title: "Two Souls, One Destiny",
+      text: "Before everything begins… two hearts were destined to meet.",
+    },
+    {
+      title: "A Journey of Love",
+      text: "Every moment, every smile… led us to this beautiful day.",
+    },
+    {
+      title: "Forever Begins",
+      text: "Now we step into a lifetime of togetherness & memories.",
+    },
+  ];
+
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-pink-50 via-purple-50 to-purple-100 text-gray-800">
 
-      {/* ✨ Glow Background */}
+      {/* Glow */}
       {Array.from({ length: 6 }).map((_, i) => (
         <Glow key={i} />
       ))}
 
-      {/* 🎆 Fireworks */}
+      {/* Fireworks */}
       {fireworks.map((fw) => (
         <Firework key={fw.id} x={fw.x} y={fw.y} />
       ))}
 
-      {/* 🌸 Petals */}
+      {/* Petals */}
       {showPetals &&
         Array.from({ length: 25 }).map((_, i) => <Petal key={i} />)}
 
@@ -263,79 +305,82 @@ export default function WeddingInvitation() {
       {opened && (
         <button
           onClick={toggleMusic}
-          className="fixed top-6 left-6 z-50 bg-white/90 px-5 py-3 rounded-full shadow-xl backdrop-blur-md"
+          className="fixed top-6 left-6 z-50 bg-white/90 px-5 py-3 rounded-full shadow-xl"
         >
           {isPlaying ? "⏸️ Pause" : "🎵 Play"}
         </button>
       )}
 
-      {/* MAIN UI (UNCHANGED) */}
-      <section className="h-screen flex items-center justify-center px-6 text-center relative z-10">
-        <AnimatePresence mode="wait">
-          {!opened ? (
-            <motion.div
-              key="closed"
-              onClick={openInvitation}
-              className="cursor-pointer bg-white p-16 rounded-3xl shadow-2xl"
-            >
-              <div className="text-6xl mb-4">💌</div>
-              <h2 className="text-2xl text-purple-600">
-                Tap to Open Invitation
-              </h2>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="open"
-              variants={fadeContainer}
-              initial="hidden"
-              animate="visible"
-              className="max-w-xl w-full bg-white p-10 rounded-3xl shadow-xl"
-            >
-              <motion.div className="text-4xl text-purple-800 mb-4">
-                {title}
-              </motion.div>
+      {/* 🎬 CINEMATIC STORY SCROLL LAYER */}
+      <div className="relative z-10">
+        {story.map((s, i) => (
+          <StoryBlock key={i} index={i} title={s.title} text={s.text} />
+        ))}
 
-              <motion.p className="text-purple-600 mb-4">
-                With the blessings of our beloved families,
-                we joyfully invite you to celebrate the wedding of
-              </motion.p>
-
-              <motion.h2 className="text-2xl font-semibold text-purple-700 mb-4">
-                Dhilip 💜 Partner
-              </motion.h2>
-
-              <motion.p className="text-lg text-purple-500">
-                {quotes[quoteIndex]}
-              </motion.p>
-
+        {/* MAIN UI (UNCHANGED) */}
+        <section className="h-screen flex items-center justify-center px-6 text-center relative z-10">
+          <AnimatePresence mode="wait">
+            {!opened ? (
               <motion.div
-                variants={fadeItem}
-                className="flex justify-center gap-6 mt-8 flex-wrap"
+                onClick={openInvitation}
+                className="cursor-pointer bg-white p-16 rounded-3xl shadow-2xl"
               >
-                <FlipUnit value={timeLeft.d} label="Days" />
-                <FlipUnit value={timeLeft.h} label="Hours" />
-                <FlipUnit value={timeLeft.m} label="Minutes" />
-                <FlipUnit value={timeLeft.s} label="Seconds" />
+                <div className="text-6xl mb-4">💌</div>
+                <h2 className="text-2xl text-purple-600">
+                  Tap to Open Invitation
+                </h2>
               </motion.div>
+            ) : (
+              <motion.div
+                variants={fadeContainer}
+                initial="hidden"
+                animate="visible"
+                className="max-w-xl w-full bg-white p-10 rounded-3xl shadow-xl"
+              >
+                <motion.div className="text-4xl text-purple-800 mb-4">
+                  {title}
+                </motion.div>
 
-              <motion.div className="mt-8 text-purple-700 space-y-2">
-                <p>📅 May 20, 2026</p>
-                <p>⏰ 10:00 AM onwards</p>
-                <p>📍 Wedding Hall, Your City</p>
+                <motion.p className="text-purple-600 mb-4">
+                  With the blessings of our beloved families,
+                  we joyfully invite you to celebrate the wedding of
+                </motion.p>
+
+                <motion.h2 className="text-2xl font-semibold text-purple-700 mb-4">
+                  Dhilip 💜 Partner
+                </motion.h2>
+
+                <motion.p className="text-lg text-purple-500">
+                  {quotes[quoteIndex]}
+                </motion.p>
+
+                <motion.div
+                  className="flex justify-center gap-6 mt-8 flex-wrap"
+                >
+                  <FlipUnit value={timeLeft.d} label="Days" />
+                  <FlipUnit value={timeLeft.h} label="Hours" />
+                  <FlipUnit value={timeLeft.m} label="Minutes" />
+                  <FlipUnit value={timeLeft.s} label="Seconds" />
+                </motion.div>
+
+                <motion.div className="mt-8 text-purple-700 space-y-2">
+                  <p>📅 May 20, 2026</p>
+                  <p>⏰ 10:00 AM onwards</p>
+                  <p>📍 Wedding Hall, Your City</p>
+                </motion.div>
+
+                <motion.p className="mt-6 text-purple-600">
+                  Your presence will make our day even more special.
+                </motion.p>
+
+                <motion.p className="mt-6 text-sm text-purple-400">
+                  With love & blessings 🙏
+                </motion.p>
               </motion.div>
-
-              <motion.p className="mt-6 text-purple-600">
-                Your presence will make our day even more special.
-                We look forward to celebrating with you 💖
-              </motion.p>
-
-              <motion.p className="mt-6 text-sm text-purple-400">
-                With love & blessings 🙏
-              </motion.p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </section>
+            )}
+          </AnimatePresence>
+        </section>
+      </div>
     </div>
   );
 }
