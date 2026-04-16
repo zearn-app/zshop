@@ -7,8 +7,8 @@ import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion"
 const weddingDate = new Date("2026-05-20T10:00:00");
 
 const couple = {
-  bride: "Partner",
-  groom: "Dhilip",
+  bride: "✨",
+  groom: "Dinesh",
 };
 
 const eventDetails = {
