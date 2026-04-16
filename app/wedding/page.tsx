@@ -11,8 +11,6 @@ const couple = {
   groom: "Dhilip",
 };
 
-const gallery = ["/w1.jpeg", "/w2.jpeg", "/w3.jpeg", "/w4.jpeg"];
-
 const timeline = [
   { title: "We Met", desc: "A beautiful coincidence turned destiny." },
   { title: "First Talk", desc: "Endless conversations began." },
@@ -31,42 +29,17 @@ function getTimeLeft() {
   };
 }
 
-// ---------------- ENVELOPE + PAPER ANIMATION ----------------
+// ---------------- ENVELOPE ----------------
 function EnvelopeIntro({ onOpen }: { onOpen: () => void }) {
   return (
     <motion.div
-      className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-black via-purple-950 to-black z-50 overflow-hidden"
-      initial={{ opacity: 1 }}
+      className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-black via-purple-950 to-black z-50"
       exit={{ opacity: 0 }}
     >
-      {/* glowing background */}
-      {Array.from({ length: 6 }).map((_, i) => (
-        <motion.div
-          key={i}
-          className="absolute w-40 h-40 rounded-full bg-purple-500 blur-3xl opacity-20"
-          animate={{
-            scale: [1, 1.6, 1],
-            x: [0, 40, -40, 0],
-            y: [0, -40, 40, 0],
-          }}
-          transition={{
-            duration: 6,
-            repeat: Infinity,
-            delay: i * 0.3,
-          }}
-          style={{
-            top: `${20 + i * 10}%`,
-            left: `${10 + i * 12}%`,
-          }}
-        />
-      ))}
-
-      {/* ENVELOPE STAGE */}
       <motion.div
-        className="text-center z-10 cursor-pointer"
-        initial={{ scale: 0.6, opacity: 0, rotateX: 80 }}
-        animate={{ scale: 1, opacity: 1, rotateX: 0 }}
-        transition={{ duration: 1 }}
+        className="text-center cursor-pointer"
+        initial={{ scale: 0.7, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
         onClick={onOpen}
       >
         <motion.div
@@ -78,7 +51,7 @@ function EnvelopeIntro({ onOpen }: { onOpen: () => void }) {
         </motion.div>
 
         <h1 className="text-white text-3xl mt-4 font-serif">
-          Dhilip & Partner
+          {couple.groom} & {couple.bride}
         </h1>
 
         <p className="text-purple-300 mt-2 tracking-[0.3em] text-sm">
@@ -86,46 +59,24 @@ function EnvelopeIntro({ onOpen }: { onOpen: () => void }) {
         </p>
 
         <p className="mt-6 text-white/60 text-sm">
-          Tap to open envelope ✨
+          Tap to open ✨
         </p>
       </motion.div>
     </motion.div>
   );
 }
 
-// ---------------- PAPER UNFOLD LAYER ----------------
+// ---------------- PAPER WRAPPER ----------------
 function PaperUnfold({ children }: { children: React.ReactNode }) {
   return (
     <motion.div
-      className="relative"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      className="bg-white/80 backdrop-blur-xl shadow-2xl rounded-3xl overflow-hidden"
+      initial={{ scaleY: 0 }}
+      animate={{ scaleY: 1 }}
+      transition={{ duration: 0.8 }}
+      style={{ transformOrigin: "top" }}
     >
-      {/* PAPER BACK */}
-      <motion.div
-        initial={{ scaleY: 0, rotateX: 80 }}
-        animate={{ scaleY: 1, rotateX: 0 }}
-        transition={{ duration: 0.9, ease: "easeOut" }}
-        style={{ transformOrigin: "top" }}
-        className="backdrop-blur-xl bg-white/70 shadow-2xl rounded-3xl"
-      >
-        {/* INNER CONTENT REVEAL */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-        >
-          {children}
-        </motion.div>
-      </motion.div>
-
-      {/* PAPER FOLD SHADOW */}
-      <motion.div
-        className="absolute top-0 left-0 w-full h-10 bg-gradient-to-b from-black/20 to-transparent rounded-t-3xl"
-        initial={{ opacity: 1 }}
-        animate={{ opacity: 0 }}
-        transition={{ duration: 1 }}
-      />
+      {children}
     </motion.div>
   );
 }
@@ -134,8 +85,6 @@ function PaperUnfold({ children }: { children: React.ReactNode }) {
 export default function WeddingPage() {
   const [time, setTime] = useState(getTimeLeft());
   const [music, setMusic] = useState(false);
-  const [theme, setTheme] = useState("light");
-  const [rsvp, setRsvp] = useState(false);
 
   const [intro, setIntro] = useState(true);
   const [opened, setOpened] = useState(false);
@@ -148,10 +97,26 @@ export default function WeddingPage() {
     return () => clearInterval(t);
   }, []);
 
+  // AUTO MUSIC CONTROL
   useEffect(() => {
     if (!audioRef.current) return;
-    music ? audioRef.current.play().catch(() => {}) : audioRef.current.pause();
+
+    if (music) {
+      audioRef.current.play().catch(() => {});
+    } else {
+      audioRef.current.pause();
+    }
   }, [music]);
+
+  const openInvitation = () => {
+    setIntro(false);
+    setMusic(true); // ✅ auto play on open
+
+    setTimeout(() => {
+      setOpened(true);
+      setTimeout(() => setPaperOpen(true), 400);
+    }, 500);
+  };
 
   const share = async () => {
     try {
@@ -164,53 +129,34 @@ export default function WeddingPage() {
   };
 
   return (
-    <div
-      className={
-        theme === "dark"
-          ? "bg-black text-white min-h-screen"
-          : "bg-pink-50 text-gray-800 min-h-screen"
-      }
-    >
-      {/* ENVELOPE INTRO */}
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-rose-50 text-gray-800 overflow-x-hidden">
+
+      {/* ENVELOPE */}
       <AnimatePresence>
-        {intro && (
-          <EnvelopeIntro
-            onOpen={() => {
-              setIntro(false);
-              setTimeout(() => {
-                setOpened(true);
-                setTimeout(() => setPaperOpen(true), 500);
-              }, 600);
-            }}
-          />
-        )}
+        {intro && <EnvelopeIntro onOpen={openInvitation} />}
       </AnimatePresence>
 
-      {/* BACKGROUND */}
-      <div className="fixed inset-0 -z-10 bg-gradient-to-br from-pink-100 via-purple-100 to-rose-100" />
-
-      {/* FLOATING HEARTS */}
-      {Array.from({ length: 20 }).map((_, i) => (
+      {/* BACKGROUND FLOATING HEARTS */}
+      {Array.from({ length: 15 }).map((_, i) => (
         <motion.div
           key={i}
           className="fixed text-pink-300 text-xl"
           initial={{ y: "100vh", x: Math.random() * 100 + "vw" }}
           animate={{ y: "-10vh" }}
-          transition={{ duration: 10 + Math.random() * 10, repeat: Infinity }}
+          transition={{ duration: 12 + Math.random() * 8, repeat: Infinity }}
         >
           💖
         </motion.div>
       ))}
 
       {/* TOP BAR */}
-      <div className="flex justify-between p-4 backdrop-blur-md bg-white/40 sticky top-0 z-40">
-        <h1 className="font-serif text-xl">
+      <div className="flex justify-between p-4 backdrop-blur-md bg-white/50 sticky top-0 z-40">
+        <h1 className="font-serif text-lg">
           {couple.groom} ❤️ {couple.bride}
         </h1>
 
         <div className="flex gap-3">
           <button onClick={() => setMusic(!music)}>🎵</button>
-          <button onClick={() => setTheme(theme === "light" ? "dark" : "light")}>🌓</button>
           <button onClick={share}>🔗</button>
         </div>
       </div>
@@ -219,26 +165,21 @@ export default function WeddingPage() {
         <source src="/music.mp3" />
       </audio>
 
-      {/* ========================= */}
-      {/* PAPER UNFOLD WRAPPER */}
-      {/* ========================= */}
-
+      {/* MAIN CONTENT */}
       {opened && (
-        <div className="relative p-4">
+        <div className="p-4 flex flex-col gap-10">
 
-          {/* WRAP ALL CONTENT INSIDE PAPER ANIMATION */}
           <AnimatePresence>
             {paperOpen && (
               <motion.div
-                initial={{ opacity: 0, y: 60 }}
+                initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8 }}
               >
                 <PaperUnfold>
 
-                  {/* HERO */}
-                  <section className="h-screen flex flex-col items-center justify-center text-center px-4">
-                    <h1 className="text-5xl md:text-7xl font-serif">
+                  {/* HERO (NO EMPTY FULL SCREEN) */}
+                  <section className="py-16 text-center">
+                    <h1 className="text-4xl md:text-6xl font-serif">
                       {couple.groom} ❤️ {couple.bride}
                     </h1>
                     <p className="mt-4 italic opacity-80">
@@ -247,44 +188,49 @@ export default function WeddingPage() {
                   </section>
 
                   {/* COUNTDOWN */}
-                  <section className="h-screen flex flex-col items-center justify-center text-center">
-                    <h2 className="text-3xl font-serif mb-6">
+                  <section className="py-16 text-center">
+                    <h2 className="text-2xl font-serif mb-6">
                       Countdown to Forever
                     </h2>
 
-                    <div className="flex gap-6 text-2xl">
+                    <div className="flex flex-wrap justify-center gap-4 text-xl">
                       {Object.entries(time).map(([k, v]) => (
                         <div
                           key={k}
-                          className="bg-white/60 px-4 py-3 rounded-xl shadow"
+                          className="bg-white/70 px-4 py-3 rounded-xl shadow"
                         >
-                          <div className="text-3xl font-bold">{v}</div>
-                          <div className="text-sm uppercase">{k}</div>
+                          <div className="text-2xl font-bold">{v}</div>
+                          <div className="text-xs uppercase">{k}</div>
                         </div>
                       ))}
                     </div>
                   </section>
 
                   {/* INVITATION */}
-                  <section className="h-screen flex items-center justify-center px-6">
-                    <div className="p-10 rounded-3xl text-center max-w-2xl">
-                      <h2 className="text-2xl font-serif mb-4">
-                        Wedding Invitation
-                      </h2>
-                      <p>
-                        With joyful hearts, we invite you to celebrate our union and
-                        bless our journey of love.
-                      </p>
-                    </div>
+                  <section className="py-16 text-center max-w-2xl mx-auto">
+                    <h2 className="text-2xl font-serif mb-4">
+                      Wedding Invitation
+                    </h2>
+                    <p className="opacity-80">
+                      With joyful hearts, we invite you to celebrate our union and
+                      bless our journey of love.
+                    </p>
                   </section>
 
                   {/* EVENT */}
-                  <section className="h-screen flex flex-col items-center justify-center text-center">
-                    <h2 className="text-3xl font-serif mb-6">Event Details</h2>
-                    <div className="flex flex-col md:flex-row gap-6">
-                      <div className="bg-white/70 p-6 rounded-2xl shadow">📅 20 May 2026</div>
-                      <div className="bg-white/70 p-6 rounded-2xl shadow">⏰ 10:00 AM</div>
-                      <div className="bg-white/70 p-6 rounded-2xl shadow">📍 Tamil Nadu</div>
+                  <section className="py-16 text-center">
+                    <h2 className="text-2xl font-serif mb-6">Event Details</h2>
+
+                    <div className="flex flex-wrap justify-center gap-4">
+                      <div className="bg-white/70 p-4 rounded-2xl shadow">
+                        📅 20 May 2026
+                      </div>
+                      <div className="bg-white/70 p-4 rounded-2xl shadow">
+                        ⏰ 10:00 AM
+                      </div>
+                      <div className="bg-white/70 p-4 rounded-2xl shadow">
+                        📍 Tamil Nadu
+                      </div>
                     </div>
                   </section>
 
