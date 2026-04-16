@@ -31,15 +31,37 @@ const fadeItem: Variants = {
   },
 };
 
-// --- 🎆 FIREWORK PARTICLE ---
+// --- ✨ GLOW PARTICLE ---
+function Glow() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.5 }}
+      animate={{
+        opacity: [0.2, 0.6, 0.2],
+        scale: [0.8, 1.4, 0.8],
+      }}
+      transition={{
+        duration: 4 + Math.random() * 3,
+        repeat: Infinity,
+      }}
+      className="fixed w-32 h-32 bg-purple-300 rounded-full blur-3xl z-0"
+      style={{
+        top: `${Math.random() * 100}%`,
+        left: `${Math.random() * 100}%`,
+      }}
+    />
+  );
+}
+
+// --- 🎆 FIREWORK ---
 function Firework({ x, y }: { x: number; y: number }) {
-  const particles = Array.from({ length: 16 });
+  const particles = Array.from({ length: 18 });
 
   return (
     <>
       {particles.map((_, i) => {
         const angle = (i / particles.length) * 2 * Math.PI;
-        const distance = 60 + Math.random() * 60;
+        const distance = 70 + Math.random() * 80;
 
         return (
           <motion.span
@@ -49,10 +71,10 @@ function Firework({ x, y }: { x: number; y: number }) {
               x: x + Math.cos(angle) * distance,
               y: y + Math.sin(angle) * distance,
               opacity: 0,
-              scale: 0.4,
+              scale: 0.3,
             }}
-            transition={{ duration: 1 }}
-            className="fixed w-2 h-2 bg-pink-400 rounded-full z-50"
+            transition={{ duration: 1.2, ease: "easeOut" }}
+            className="fixed w-2 h-2 bg-gradient-to-r from-pink-400 to-purple-400 rounded-full z-50 shadow-lg"
           />
         );
       })}
@@ -60,15 +82,23 @@ function Firework({ x, y }: { x: number; y: number }) {
   );
 }
 
-// --- 🌸 FLOWER PETAL ---
+// --- 🌸 PETAL ---
 function Petal() {
   const left = Math.random() * 100;
 
   return (
     <motion.div
-      initial={{ y: -50, opacity: 0 }}
-      animate={{ y: "110vh", opacity: 1 }}
-      transition={{ duration: 5 + Math.random() * 3, ease: "linear" }}
+      initial={{ y: -50, opacity: 0, rotate: 0 }}
+      animate={{
+        y: "110vh",
+        opacity: 1,
+        x: [0, 30, -30, 0],
+        rotate: 360,
+      }}
+      transition={{
+        duration: 6 + Math.random() * 3,
+        ease: "linear",
+      }}
       className="fixed top-0 text-pink-300 text-xl z-40"
       style={{ left: `${left}%` }}
     >
@@ -121,9 +151,7 @@ export default function WeddingInvitation() {
   const [quoteIndex, setQuoteIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  const [fireworks, setFireworks] = useState<
-    { id: number; x: number; y: number }[]
-  >([]);
+  const [fireworks, setFireworks] = useState<any[]>([]);
   const [showPetals, setShowPetals] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -146,7 +174,7 @@ export default function WeddingInvitation() {
     return () => clearInterval(interval);
   }, []);
 
-  // --- Quotes ---
+  // Quotes
   useEffect(() => {
     const interval = setInterval(() => {
       setQuoteIndex((prev) => (prev + 1) % quotes.length);
@@ -155,26 +183,23 @@ export default function WeddingInvitation() {
     return () => clearInterval(interval);
   }, []);
 
-  // 🎆 Continuous Fireworks
+  // 🎆 Continuous fireworks
   useEffect(() => {
     if (!opened) return;
 
     const interval = setInterval(() => {
-      const newFirework = {
+      const fw = {
         id: fireworkId.current++,
         x: Math.random() * window.innerWidth,
-        y: Math.random() * (window.innerHeight * 0.6),
+        y: Math.random() * (window.innerHeight * 0.5),
       };
 
-      setFireworks((prev) => [...prev, newFirework]);
+      setFireworks((prev) => [...prev, fw]);
 
-      // remove after animation
       setTimeout(() => {
-        setFireworks((prev) =>
-          prev.filter((fw) => fw.id !== newFirework.id)
-        );
-      }, 1000);
-    }, 600);
+        setFireworks((prev) => prev.filter((f) => f.id !== fw.id));
+      }, 1200);
+    }, 500);
 
     return () => clearInterval(interval);
   }, [opened]);
@@ -184,8 +209,19 @@ export default function WeddingInvitation() {
     setShowPetals(true);
 
     setTimeout(() => {
-      audioRef.current?.play().catch(() => {});
-      setIsPlaying(true);
+      if (audioRef.current) {
+        audioRef.current.volume = 0;
+        audioRef.current.play().catch(() => {});
+        setIsPlaying(true);
+
+        // 🎵 Smooth fade-in
+        let vol = 0;
+        const fade = setInterval(() => {
+          if (vol >= 1) return clearInterval(fade);
+          vol += 0.05;
+          audioRef.current!.volume = vol;
+        }, 100);
+      }
     }, 500);
   };
 
@@ -200,19 +236,23 @@ export default function WeddingInvitation() {
   };
 
   const title = "Dhilip & Partner";
-  const letters = title.split("");
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-purple-100 text-gray-800 overflow-x-hidden">
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-pink-50 via-purple-50 to-purple-100 text-gray-800">
 
-      {/* 🎆 Continuous Fireworks */}
+      {/* ✨ Glow Background */}
+      {Array.from({ length: 6 }).map((_, i) => (
+        <Glow key={i} />
+      ))}
+
+      {/* 🎆 Fireworks */}
       {fireworks.map((fw) => (
         <Firework key={fw.id} x={fw.x} y={fw.y} />
       ))}
 
       {/* 🌸 Petals */}
       {showPetals &&
-        Array.from({ length: 20 }).map((_, i) => <Petal key={i} />)}
+        Array.from({ length: 25 }).map((_, i) => <Petal key={i} />)}
 
       {/* Audio */}
       <audio ref={audioRef} loop>
@@ -223,14 +263,14 @@ export default function WeddingInvitation() {
       {opened && (
         <button
           onClick={toggleMusic}
-          className="fixed top-6 left-6 z-50 bg-white/90 px-5 py-3 rounded-full shadow-xl"
+          className="fixed top-6 left-6 z-50 bg-white/90 px-5 py-3 rounded-full shadow-xl backdrop-blur-md"
         >
           {isPlaying ? "⏸️ Pause" : "🎵 Play"}
         </button>
       )}
 
-      {/* MAIN */}
-      <section className="h-screen flex items-center justify-center px-6 text-center">
+      {/* MAIN UI (UNCHANGED) */}
+      <section className="h-screen flex items-center justify-center px-6 text-center relative z-10">
         <AnimatePresence mode="wait">
           {!opened ? (
             <motion.div
@@ -252,9 +292,7 @@ export default function WeddingInvitation() {
               className="max-w-xl w-full bg-white p-10 rounded-3xl shadow-xl"
             >
               <motion.div className="text-4xl text-purple-800 mb-4">
-                {letters.map((l, i) => (
-                  <span key={i}>{l}</span>
-                ))}
+                {title}
               </motion.div>
 
               <motion.p className="text-purple-600 mb-4">
