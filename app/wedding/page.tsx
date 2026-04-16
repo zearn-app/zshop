@@ -14,7 +14,7 @@ const quotes = [
   "Forever starts with you ✨",
 ];
 
-const MUSIC_URL = "/music.mp3";
+const MUSIC_URL = "/anba-va-en-anba-va.mp3";
 
 // --- ANIMATIONS ---
 const fadeContainer: Variants = {
@@ -23,11 +23,7 @@ const fadeContainer: Variants = {
 };
 
 // --- CINEMATIC INTRO ---
-function CinematicIntro({
-  onEnter,
-}: {
-  onEnter: () => void;
-}) {
+function CinematicIntro({ onEnter }: { onEnter: () => void }) {
   return (
     <motion.div
       className="fixed inset-0 z-[100] bg-black flex items-center justify-center overflow-hidden"
@@ -54,28 +50,31 @@ function CinematicIntro({
         />
       ))}
 
+      {/* ENVELOPE STAGE */}
       <motion.div className="text-center z-10">
-        <motion.h1
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1 }}
-          className="text-white text-4xl md:text-6xl font-light"
+        <motion.div
+          initial={{ scale: 0.8, rotate: -5 }}
+          animate={{ scale: 1, rotate: 0 }}
+          className="text-6xl"
         >
+          💌
+        </motion.div>
+
+        <motion.h1 className="text-white text-4xl mt-4 font-light">
           DHILIP
         </motion.h1>
 
-        <motion.div className="text-purple-300 mt-3 tracking-[0.4em]">
+        <motion.div className="text-purple-300 mt-2 tracking-[0.4em]">
           WEDDING INVITATION
         </motion.div>
 
-        {/* FIXED BUTTON */}
+        {/* OPEN BUTTON */}
         <motion.button
           onClick={onEnter}
           className="mt-8 px-8 py-3 bg-purple-500 hover:bg-purple-600 text-white rounded-full shadow-xl"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
+          whileTap={{ scale: 0.95 }}
         >
-          View Invitation 💌
+          Open Envelope ✉️
         </motion.button>
       </motion.div>
     </motion.div>
@@ -117,22 +116,20 @@ function Petal() {
 
 // --- MAIN ---
 export default function WeddingInvitation() {
-  // ✅ FIX: single safe screen controller
-  const [screen, setScreen] = useState<"intro" | "main">("intro");
+  const [screen, setScreen] = useState<"intro" | "open" | "main">("intro");
 
-  const [opened, setOpened] = useState(false);
   const [timeLeft, setTimeLeft] = useState({ d: 0, h: 0, m: 0, s: 0 });
   const [quoteIndex, setQuoteIndex] = useState(0);
 
-  const [fireworks, setFireworks] = useState<any[]>([]);
+  const [opened, setOpened] = useState(false);
   const [showPetals, setShowPetals] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement>(null);
-  const fireworkId = useRef(0);
 
-  // --- ENTER FROM INTRO (SAFE) ---
+  // --- ENTER ---
   const enterSite = () => {
-    setScreen("main");
+    setScreen("open"); // envelope stage
+    setTimeout(() => setScreen("main"), 1200); // cinematic zoom delay
   };
 
   // --- EFFECTS ---
@@ -160,26 +157,6 @@ export default function WeddingInvitation() {
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    if (!opened) return;
-
-    const interval = setInterval(() => {
-      const fw = {
-        id: fireworkId.current++,
-        x: Math.random() * window.innerWidth,
-        y: Math.random() * (window.innerHeight * 0.5),
-      };
-
-      setFireworks((prev) => [...prev, fw]);
-
-      setTimeout(() => {
-        setFireworks((prev) => prev.filter((f) => f.id !== fw.id));
-      }, 1200);
-    }, 500);
-
-    return () => clearInterval(interval);
-  }, [opened]);
-
   // --- OPEN INVITATION ---
   const openInvitation = () => {
     setOpened(true);
@@ -205,26 +182,36 @@ export default function WeddingInvitation() {
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-pink-50 via-purple-50 to-purple-100 text-gray-800">
 
-      {/* INTRO SCREEN */}
+      {/* INTRO */}
       <AnimatePresence>
         {screen === "intro" && (
           <CinematicIntro onEnter={enterSite} />
         )}
       </AnimatePresence>
 
-      {/* MAIN SCREEN (SAFE) */}
+      {/* ENVELOPE TRANSITION SCREEN */}
+      {screen === "open" && (
+        <motion.div
+          className="fixed inset-0 flex items-center justify-center bg-black z-50"
+          initial={{ opacity: 1 }}
+          animate={{ opacity: 1 }}
+        >
+          <motion.div
+            initial={{ scale: 0.5, rotateX: 80, opacity: 0 }}
+            animate={{ scale: 1, rotateX: 0, opacity: 1 }}
+            transition={{ duration: 1 }}
+            className="text-6xl"
+          >
+            📜 Opening Letter...
+          </motion.div>
+        </motion.div>
+      )}
+
+      {/* MAIN */}
       {screen === "main" && (
         <>
           {Array.from({ length: 6 }).map((_, i) => (
             <Glow key={i} />
-          ))}
-
-          {fireworks.map((fw) => (
-            <motion.div
-              key={fw.id}
-              className="fixed w-2 h-2 bg-pink-400 rounded-full z-50"
-              style={{ left: fw.x, top: fw.y }}
-            />
           ))}
 
           {showPetals &&
@@ -234,39 +221,63 @@ export default function WeddingInvitation() {
             <source src={MUSIC_URL} />
           </audio>
 
+          {/* INVITATION CARD */}
           <section className="h-screen flex items-center justify-center text-center">
             {!opened ? (
-              <div
+              <motion.div
                 onClick={openInvitation}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
                 className="cursor-pointer bg-white p-16 rounded-3xl shadow-2xl"
               >
                 <div className="text-6xl">💌</div>
                 <h2 className="text-purple-600">Tap to Open Invitation</h2>
-              </div>
+              </motion.div>
             ) : (
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+                initial={{ scale: 0.6, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{
+                  duration: 1,
+                  type: "spring",
+                }}
                 className="bg-white p-10 rounded-3xl shadow-xl max-w-xl w-full"
               >
-                <h1 className="text-4xl text-purple-800 mb-4">{title}</h1>
+                {/* PAPER UNFOLD EFFECT */}
+                <motion.div
+                  initial={{ scaleY: 0 }}
+                  animate={{ scaleY: 1 }}
+                  transition={{ duration: 0.8 }}
+                  className="origin-top"
+                >
+                  <h1 className="text-4xl text-purple-800 mb-4">
+                    {title}
+                  </h1>
 
-                <p className="text-purple-600 mb-4">
-                  With blessings of our families
-                </p>
+                  <p className="text-purple-600 mb-4">
+                    With blessings of our families
+                  </p>
 
-                <h2 className="text-2xl text-purple-700 mb-4">
-                  Dhilip 💜 Partner
-                </h2>
+                  <h2 className="text-2xl text-purple-700 mb-4">
+                    Dhilip 💜 Partner
+                  </h2>
 
-                <p className="text-purple-500">{quotes[quoteIndex]}</p>
+                  <motion.p
+                    key={quoteIndex}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-purple-500"
+                  >
+                    {quotes[quoteIndex]}
+                  </motion.p>
 
-                <div className="mt-6 flex justify-center gap-4">
-                  <div>{timeLeft.d}D</div>
-                  <div>{timeLeft.h}H</div>
-                  <div>{timeLeft.m}M</div>
-                  <div>{timeLeft.s}S</div>
-                </div>
+                  <div className="mt-6 flex justify-center gap-4">
+                    <div>{timeLeft.d}D</div>
+                    <div>{timeLeft.h}H</div>
+                    <div>{timeLeft.m}M</div>
+                    <div>{timeLeft.s}S</div>
+                  </div>
+                </motion.div>
               </motion.div>
             )}
           </section>
