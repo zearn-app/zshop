@@ -13,13 +13,10 @@ export const useApp = () => {
     REGISTER: "/register",
     HOME: "/home",
     DASHBOARD: "/dashboard",
-    COMPARE: "/compare",
+    ADMIN-PRODUCT: "/admin-product",
 
 
-    WEDDING: "/wedding",
-
-
-    LOVE1: "/love1",
+   
 
 
   };
@@ -38,20 +35,13 @@ export const useApp = () => {
       router.push(routes.HOME + query);
     },
 
+goToadmin-product: () => router.push(routes.ADMIN-PRODUCT),
 
 
-    goToWedding: () =>          router.push(routes.WEDDING),
-
-
-
-     goTolove1: () =>          router.push(routes.LOVE1),
-
-
-
+   
 
     goToDashboard: () => router.push(routes.DASHBOARD),
-    goToCompare: () => router.push(routes.COMPARE),
-
+   
     // Replace
     replaceToHome: () => router.replace(routes.HOME),
 
