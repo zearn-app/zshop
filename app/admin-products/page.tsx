@@ -1,0 +1,252 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { db } from "@/lib/firebase";
+import {
+  collection,
+  addDoc,
+  getDocs,
+  doc,
+  getDoc,
+} from "firebase/firestore";
+
+export default function AdminPage() {
+  const [categories, setCategories] = useState<any[]>([]);
+  const [selectedCat, setSelectedCat] = useState<any>(null);
+  const [products, setProducts] = useState<any[]>([]);
+
+  const [newCategory, setNewCategory] = useState("");
+  const [fields, setFields] = useState<string[]>([]);
+  const [fieldInput, setFieldInput] = useState("");
+
+  const [productData, setProductData] = useState<any>({});
+  const [pricing, setPricing] = useState<any>({
+    amazon: {},
+    flipkart: {},
+    meesho: {},
+    myntra: {},
+  });
+
+  // 🔥 Load categories
+  const loadCategories = async () => {
+    const snap = await getDocs(collection(db, "categories"));
+    setCategories(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+  };
+
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  // 🔥 Load products by category
+  const loadProducts = async (catName: string) => {
+    const snap = await getDocs(collection(db, "products"));
+    const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    setProducts(list.filter(p => p.category === catName));
+  };
+
+  // ➕ Add category
+  const addCategory = async () => {
+    if (!newCategory) return;
+
+    await addDoc(collection(db, "categories"), {
+      name: newCategory,
+      fields,
+    });
+
+    setNewCategory("");
+    setFields([]);
+    loadCategories();
+  };
+
+  // ➕ Add field
+  const addField = () => {
+    if (!fieldInput) return;
+    setFields([...fields, fieldInput]);
+    setFieldInput("");
+  };
+
+  // ➕ Add product
+  const addProduct = async () => {
+    await addDoc(collection(db, "products"), {
+      name: productData.name,
+      description: productData.description,
+      image: productData.image,
+      category: selectedCat.name,
+      specs: productData.specs,
+      pricing,
+    });
+
+    alert("Product added");
+    loadProducts(selectedCat.name);
+  };
+
+  return (
+    <div className="p-6 text-white bg-black min-h-screen">
+
+      <h1 className="text-2xl font-bold mb-6">Admin Panel</h1>
+
+      {/* 🧱 CREATE CATEGORY */}
+      <div className="mb-10">
+        <h2 className="text-xl mb-2">Create Category</h2>
+
+        <input
+          placeholder="Category name"
+          value={newCategory}
+          onChange={(e) => setNewCategory(e.target.value)}
+          className="p-2 bg-gray-800 rounded mr-2"
+        />
+
+        <input
+          placeholder="Field (RAM, Camera...)"
+          value={fieldInput}
+          onChange={(e) => setFieldInput(e.target.value)}
+          className="p-2 bg-gray-800 rounded mr-2"
+        />
+
+        <button onClick={addField} className="bg-blue-500 px-3 py-2 rounded">
+          Add Field
+        </button>
+
+        <div className="mt-2">
+          {fields.map((f, i) => (
+            <span key={i} className="mr-2 text-yellow-400">{f}</span>
+          ))}
+        </div>
+
+        <button
+          onClick={addCategory}
+          className="mt-3 bg-green-500 px-4 py-2 rounded"
+        >
+          Save Category
+        </button>
+      </div>
+
+      {/* 📦 CATEGORY LIST */}
+      <div className="mb-10">
+        <h2 className="text-xl mb-3">Categories</h2>
+
+        <div className="flex gap-3 flex-wrap">
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => {
+                setSelectedCat(cat);
+                loadProducts(cat.name);
+              }}
+              className="bg-gray-800 px-4 py-2 rounded"
+            >
+              {cat.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 🛍 PRODUCTS UNDER CATEGORY */}
+      {selectedCat && (
+        <div>
+          <h2 className="text-xl mb-4">
+            {selectedCat.name} Products
+          </h2>
+
+          {/* ➕ ADD PRODUCT */}
+          <div className="bg-gray-900 p-4 rounded mb-6">
+
+            <input
+              placeholder="Product name"
+              onChange={(e) =>
+                setProductData({ ...productData, name: e.target.value })
+              }
+              className="p-2 bg-gray-800 rounded w-full mb-2"
+            />
+
+            <input
+              placeholder="Description"
+              onChange={(e) =>
+                setProductData({ ...productData, description: e.target.value })
+              }
+              className="p-2 bg-gray-800 rounded w-full mb-2"
+            />
+
+            <input
+              placeholder="Image URL"
+              onChange={(e) =>
+                setProductData({ ...productData, image: e.target.value })
+              }
+              className="p-2 bg-gray-800 rounded w-full mb-4"
+            />
+
+            {/* 🔥 Dynamic fields */}
+            {selectedCat.fields.map((field: string) => (
+              <input
+                key={field}
+                placeholder={field}
+                onChange={(e) =>
+                  setProductData({
+                    ...productData,
+                    specs: {
+                      ...productData.specs,
+                      [field]: e.target.value,
+                    },
+                  })
+                }
+                className="p-2 bg-gray-800 rounded w-full mb-2"
+              />
+            ))}
+
+            {/* 💰 Pricing */}
+            {["amazon", "flipkart", "meesho", "myntra"].map((site) => (
+              <div key={site} className="mb-3">
+                <p className="text-yellow-400">{site}</p>
+
+                <input
+                  placeholder="Price"
+                  onChange={(e) =>
+                    setPricing({
+                      ...pricing,
+                      [site]: {
+                        ...pricing[site],
+                        price: e.target.value,
+                      },
+                    })
+                  }
+                  className="p-2 bg-gray-800 rounded mr-2"
+                />
+
+                <input
+                  placeholder="Link"
+                  onChange={(e) =>
+                    setPricing({
+                      ...pricing,
+                      [site]: {
+                        ...pricing[site],
+                        link: e.target.value,
+                      },
+                    })
+                  }
+                  className="p-2 bg-gray-800 rounded"
+                />
+              </div>
+            ))}
+
+            <button
+              onClick={addProduct}
+              className="bg-green-500 px-4 py-2 rounded mt-3"
+            >
+              Add Product
+            </button>
+          </div>
+
+          {/* 📋 PRODUCT LIST */}
+          <div className="grid grid-cols-2 gap-4">
+            {products.map((p) => (
+              <div key={p.id} className="bg-gray-800 p-3 rounded">
+                <p className="font-bold">{p.name}</p>
+                <p className="text-sm text-gray-400">{p.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
