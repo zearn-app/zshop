@@ -14,7 +14,13 @@ export const useApp = () => {
     HOME: "/home",
     DASHBOARD: "/dashboard",
     COMPARE: "/compare",
+
+
     WEDDING: "/wedding",
+
+
+    LOVE1: "/love1",
+
 
   };
 
@@ -31,7 +37,17 @@ export const useApp = () => {
     goToHome: (query: string = "") => {
       router.push(routes.HOME + query);
     },
+
+
+
     goToWedding: () =>          router.push(routes.WEDDING),
+
+
+
+     goTolove1: () =>          router.push(routes.LOVE1),
+
+
+
 
     goToDashboard: () => router.push(routes.DASHBOARD),
     goToCompare: () => router.push(routes.COMPARE),
@@ -48,5 +64,10 @@ export const useApp = () => {
     isHome: pathname === routes.HOME,
     isDashboard: pathname === routes.DASHBOARD,
     isWedding: pathname === routes.WEDDING,
+
+
+    islove1: pathname === routes.LOVE1,
+
+
   };
 };
