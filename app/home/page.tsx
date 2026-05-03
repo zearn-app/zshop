@@ -4,7 +4,7 @@ import React, { useEffect, useState, Suspense } from "react";
 import { useApp } from "../app";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { db } from "@/lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
 
@@ -13,6 +13,7 @@ import { collection, getDocs } from "firebase/firestore";
  */
 const HomeContent = () => {
   const searchParams = useSearchParams();
+  const router = useRouter(); // ✅ added
   const { goToLogin, user } = useApp();
 
   const [message, setMessage] = useState("");
@@ -31,7 +32,7 @@ const HomeContent = () => {
     }
   }, [searchParams]);
 
-  // 🔥 Fetch products from Firebase
+  // 🔥 Fetch products
   useEffect(() => {
     const fetchProducts = async () => {
       const snapshot = await getDocs(collection(db, "products"));
@@ -116,7 +117,8 @@ const HomeContent = () => {
             {filtered.map((item) => (
               <div
                 key={item.id}
-                className="bg-gray-900 p-4 rounded-xl shadow hover:scale-105 transition"
+                onClick={() => router.push(`/product/${item.id}`)} // ✅ added
+                className="bg-gray-900 p-4 rounded-xl shadow hover:scale-105 transition cursor-pointer"
               >
                 <div className="h-40 bg-gray-800 rounded mb-4 flex items-center justify-center">
                   {item.image ? (
