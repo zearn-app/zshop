@@ -98,16 +98,25 @@ export default function AdminPage() {
   const saveCategory = async () => {
     if (!newCategory || fields.length === 0) return alert("Add a name and fields");
 
-    if (editingCategoryId) {
-      await updateDoc(doc(db, "categories", editingCategoryId), { name: newCategory, fields });
-      setEditingCategoryId(null);
-    } else {
-      await addDoc(collection(db, "categories"), { name: newCategory, fields });
-    }
+    try {
+      if (editingCategoryId) {
+        await updateDoc(doc(db, "categories", editingCategoryId), { 
+          name: newCategory, 
+          fields: fields 
+        });
+        setEditingCategoryId(null);
+        alert("Category updated successfully!");
+      } else {
+        await addDoc(collection(db, "categories"), { name: newCategory, fields });
+        alert("Category created!");
+      }
 
-    setNewCategory("");
-    setFields([]);
-    loadCategories();
+      setNewCategory("");
+      setFields([]);
+      loadCategories();
+    } catch (error) {
+      console.error("Error saving category:", error);
+    }
   };
 
   const startEditCategory = (cat: Category) => {
@@ -119,13 +128,21 @@ export default function AdminPage() {
 
   const deleteCategory = async (id: string) => {
     if (!confirm("Delete category? This won't delete the products inside, but they will become unlinked.")) return;
-    await deleteDoc(doc(db, "categories", id));
-    loadCategories();
-    if (selectedCat?.id === id) setSelectedCat(null);
+    try {
+      await deleteDoc(doc(db, "categories", id));
+      loadCategories();
+      if (selectedCat?.id === id) {
+        setSelectedCat(null);
+        setProducts([]);
+      }
+    } catch (error) {
+      console.error("Error deleting category:", error);
+    }
   };
 
   const addField = () => {
     if (!fieldInput) return;
+    if (fields.includes(fieldInput)) return alert("Field already exists");
     setFields([...fields, fieldInput]);
     setFieldInput("");
   };
@@ -144,25 +161,29 @@ export default function AdminPage() {
       pricing,
     };
 
-    if (editingProductId) {
-      await updateDoc(doc(db, "products", editingProductId), payload);
-      setEditingProductId(null);
-      alert("Product updated!");
-    } else {
-      await addDoc(collection(db, "products"), payload);
-      alert("Product added!");
+    try {
+      if (editingProductId) {
+        await updateDoc(doc(db, "products", editingProductId), payload);
+        setEditingProductId(null);
+        alert("Product updated!");
+      } else {
+        await addDoc(collection(db, "products"), payload);
+        alert("Product added!");
+      }
+
+      // Reset Form
+      setProductData({ name: "", description: "", image: "", specs: {} });
+      setPricing({
+        amazon: { price: "", link: "" },
+        flipkart: { price: "", link: "" },
+        meesho: { price: "", link: "" },
+        myntra: { price: "", link: "" },
+      });
+
+      loadProducts(selectedCat.name);
+    } catch (error) {
+      console.error("Error saving product:", error);
     }
-
-    // Reset Form
-    setProductData({ name: "", description: "", image: "", specs: {} });
-    setPricing({
-      amazon: { price: "", link: "" },
-      flipkart: { price: "", link: "" },
-      meesho: { price: "", link: "" },
-      myntra: { price: "", link: "" },
-    });
-
-    loadProducts(selectedCat.name);
   };
 
   const startEditProduct = (p: Product) => {
@@ -173,13 +194,24 @@ export default function AdminPage() {
       image: p.image,
       specs: p.specs || {},
     });
-    setPricing(p.pricing);
+    // Ensure all platforms exist in pricing state during edit
+    setPricing({
+      amazon: p.pricing?.amazon || { price: "", link: "" },
+      flipkart: p.pricing?.flipkart || { price: "", link: "" },
+      meesho: p.pricing?.meesho || { price: "", link: "" },
+      myntra: p.pricing?.myntra || { price: "", link: "" },
+    });
+    window.scrollTo({ top: 500, behavior: "smooth" });
   };
 
   const deleteProduct = async (id: string) => {
-    if (!confirm("Delete this product?")) return;
-    await deleteDoc(doc(db, "products", id));
-    if (selectedCat) loadProducts(selectedCat.name);
+    if (!confirm("Are you sure you want to delete this product?")) return;
+    try {
+      await deleteDoc(doc(db, "products", id));
+      if (selectedCat) loadProducts(selectedCat.name);
+    } catch (error) {
+      console.error("Error deleting product:", error);
+    }
   };
 
   /* ================= UI ================= */
@@ -198,17 +230,19 @@ export default function AdminPage() {
             placeholder="Category name (e.g. Mobiles)"
             value={newCategory}
             onChange={(e) => setNewCategory(e.target.value)}
-            className="p-2 bg-gray-800 rounded border border-gray-700 focus:outline-none focus:border-blue-500"
+            className="p-2 bg-gray-800 rounded border border-gray-700 focus:outline-none focus:border-blue-500 flex-1"
           />
-          <input
-            placeholder="Field (RAM, Storage...)"
-            value={fieldInput}
-            onChange={(e) => setFieldInput(e.target.value)}
-            className="p-2 bg-gray-800 rounded border border-gray-700 focus:outline-none focus:border-blue-500"
-          />
-          <button onClick={addField} className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded transition">
-            Add Field
-          </button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <input
+              placeholder="Field (RAM, Storage...)"
+              value={fieldInput}
+              onChange={(e) => setFieldInput(e.target.value)}
+              className="p-2 bg-gray-800 rounded border border-gray-700 focus:outline-none focus:border-blue-500 flex-1"
+            />
+            <button onClick={addField} className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded transition">
+              Add Field
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-2 mb-4">
@@ -225,7 +259,14 @@ export default function AdminPage() {
             {editingCategoryId ? "Update Category" : "Save Category"}
           </button>
           {editingCategoryId && (
-            <button onClick={() => {setEditingCategoryId(null); setNewCategory(""); setFields([]);}} className="bg-gray-700 px-6 py-2 rounded font-bold">
+            <button 
+              onClick={() => {
+                setEditingCategoryId(null); 
+                setNewCategory(""); 
+                setFields([]);
+              }} 
+              className="bg-gray-700 px-6 py-2 rounded font-bold"
+            >
               Cancel
             </button>
           )}
@@ -241,6 +282,7 @@ export default function AdminPage() {
               <button
                 onClick={() => {
                   setSelectedCat(cat);
+                  setEditingProductId(null); // Clear product editing state when switching category
                   loadProducts(cat.name);
                 }}
                 className={`px-4 py-2 rounded-lg border transition ${
@@ -251,9 +293,9 @@ export default function AdminPage() {
               >
                 {cat.name}
               </button>
-              <div className="absolute -top-3 -right-2 hidden group-hover:flex gap-1">
-                <button onClick={() => startEditCategory(cat)} className="bg-yellow-600 rounded-full w-6 h-6 text-xs flex items-center justify-center">✎</button>
-                <button onClick={() => deleteCategory(cat.id)} className="bg-red-600 rounded-full w-6 h-6 text-xs flex items-center justify-center">✕</button>
+              <div className="absolute -top-3 -right-2 hidden group-hover:flex gap-1 z-10">
+                <button onClick={(e) => { e.stopPropagation(); startEditCategory(cat); }} className="bg-yellow-600 rounded-full w-6 h-6 text-xs flex items-center justify-center hover:scale-110">✎</button>
+                <button onClick={(e) => { e.stopPropagation(); deleteCategory(cat.id); }} className="bg-red-600 rounded-full w-6 h-6 text-xs flex items-center justify-center hover:scale-110">✕</button>
               </div>
             </div>
           ))}
@@ -279,19 +321,19 @@ export default function AdminPage() {
                   placeholder="Product Name"
                   value={productData.name}
                   onChange={(e) => setProductData({ ...productData, name: e.target.value })}
-                  className="p-2 bg-gray-800 rounded w-full border border-gray-700"
+                  className="p-2 bg-gray-800 rounded w-full border border-gray-700 focus:border-blue-500 outline-none"
                 />
                 <textarea
                   placeholder="Description"
                   value={productData.description}
                   onChange={(e) => setProductData({ ...productData, description: e.target.value })}
-                  className="p-2 bg-gray-800 rounded w-full border border-gray-700 h-20"
+                  className="p-2 bg-gray-800 rounded w-full border border-gray-700 h-20 focus:border-blue-500 outline-none"
                 />
                 <input
                   placeholder="Image URL"
                   value={productData.image}
                   onChange={(e) => setProductData({ ...productData, image: e.target.value })}
-                  className="p-2 bg-gray-800 rounded w-full border border-gray-700"
+                  className="p-2 bg-gray-800 rounded w-full border border-gray-700 focus:border-blue-500 outline-none"
                 />
               </div>
 
@@ -309,7 +351,7 @@ export default function AdminPage() {
                           specs: { ...productData.specs, [field]: e.target.value },
                         })
                       }
-                      className="p-2 bg-gray-800 rounded flex-1 border border-gray-700"
+                      className="p-2 bg-gray-800 rounded flex-1 border border-gray-700 focus:border-blue-500 outline-none"
                     />
                   </div>
                 ))}
@@ -327,7 +369,7 @@ export default function AdminPage() {
                         ...pricing,
                         [site]: { ...pricing[site], price: e.target.value },
                       })}
-                      className="p-2 bg-gray-800 rounded text-sm border border-gray-700"
+                      className="p-2 bg-gray-800 rounded text-sm border border-gray-700 focus:border-blue-500 outline-none"
                     />
                     <input
                       placeholder="URL"
@@ -336,7 +378,7 @@ export default function AdminPage() {
                         ...pricing,
                         [site]: { ...pricing[site], link: e.target.value },
                       })}
-                      className="p-2 bg-gray-800 rounded text-sm border border-gray-700"
+                      className="p-2 bg-gray-800 rounded text-sm border border-gray-700 focus:border-blue-500 outline-none"
                     />
                   </div>
                 </div>
@@ -354,6 +396,12 @@ export default function AdminPage() {
                     onClick={() => {
                       setEditingProductId(null);
                       setProductData({ name: "", description: "", image: "", specs: {} });
+                      setPricing({
+                        amazon: { price: "", link: "" },
+                        flipkart: { price: "", link: "" },
+                        meesho: { price: "", link: "" },
+                        myntra: { price: "", link: "" },
+                      });
                     }}
                     className="bg-gray-700 px-4 rounded-lg"
                   >
@@ -371,10 +419,14 @@ export default function AdminPage() {
                 {products.map((p) => (
                   <div key={p.id} className="bg-gray-800 p-4 rounded-lg flex justify-between items-center border border-gray-700 hover:border-gray-500 transition">
                     <div className="flex items-center gap-4">
-                      {p.image && <img src={p.image} className="w-12 h-12 object-cover rounded bg-gray-900" alt="" />}
+                      {p.image ? (
+                        <img src={p.image} className="w-12 h-12 object-cover rounded bg-gray-900" alt="" />
+                      ) : (
+                        <div className="w-12 h-12 bg-gray-900 rounded flex items-center justify-center text-xs text-gray-600">No img</div>
+                      )}
                       <div>
                         <p className="font-bold text-lg">{p.name}</p>
-                        <p className="text-xs text-gray-400">ID: {p.id}</p>
+                        <p className="text-xs text-gray-500">ID: {p.id}</p>
                       </div>
                     </div>
                     <div className="flex gap-2">
