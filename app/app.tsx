@@ -1,5 +1,3 @@
-"use client";
-
 import React from "react";
 import { useRouter, usePathname } from "next/navigation";
 
@@ -13,51 +11,49 @@ export const useApp = () => {
     REGISTER: "/register",
     HOME: "/home",
     DASHBOARD: "/dashboard",
-    ADMIN-PRODUCT: "/admin-product",
 
+    ADMIN: "/admin",
+    ADMIN_PRODUCT: "/admin-product",
 
-   
-
-
+    PRODUCT: (id: string) => `/product/${id}`, // 🔥 dynamic route
   };
 
   return {
     pathname,
     routes,
 
-    // Navigation
-    goTolanding: () => router.push(routes.LANDING),
+    // 🔁 Navigation
+    goToLanding: () => router.push(routes.LANDING),
     goToLogin: () => router.push(routes.LOGIN),
     goToRegister: () => router.push(routes.REGISTER),
 
-    // ✅ FIXED
     goToHome: (query: string = "") => {
       router.push(routes.HOME + query);
     },
 
-goToadmin-product: () => router.push(routes.ADMIN-PRODUCT),
-
-
-   
-
     goToDashboard: () => router.push(routes.DASHBOARD),
-   
-    // Replace
+
+    // 🔥 Admin
+    goToAdmin: () => router.push(routes.ADMIN),
+    goToAdminProduct: () => router.push(routes.ADMIN_PRODUCT),
+
+    // 🔥 Product navigation
+    goToProduct: (id: string) => {
+      router.push(routes.PRODUCT(id));
+    },
+
+    // 🔄 Replace
     replaceToHome: () => router.replace(routes.HOME),
 
-    // Back
+    // 🔙 Back
     goBack: () => router.back(),
 
-    // Route checks
+    // ✅ Route checks
     isLanding: pathname === routes.LANDING,
     isLogin: pathname === routes.LOGIN,
+    isRegister: pathname === routes.REGISTER,
     isHome: pathname === routes.HOME,
     isDashboard: pathname === routes.DASHBOARD,
-    isWedding: pathname === routes.WEDDING,
-
-
-    islove1: pathname === routes.LOVE1,
-
-
+    isAdmin: pathname === routes.ADMIN,
   };
 };
