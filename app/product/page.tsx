@@ -1,20 +1,49 @@
+"use client";
 
+import { useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
+import { useParams, useRouter } from "next/navigation";
+import { db } from "@/lib/firebase";
+
+/* ========= TYPE ========= */
+
+type Product = {
+  id: string;
+  name: string;
+  description: string;
+  image: string;
+  category: string;
+  specs: Record<string, string>;
+  pricing: Record<
+    string,
+    {
+      price?: string;
+      link?: string;
+    }
+  >;
+};
+
+/* ========= COMPONENT ========= */
 
 const ProductPage = () => {
-  const { id } = useParams();
+  const params = useParams();
+  const id = params?.id as string;
+
   const router = useRouter();
-  const [product, setProduct] = useState<any>(null);
+  const [product, setProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     const fetchProduct = async () => {
       if (!id) return;
 
-      const ref = doc(db, "products", id as string);
+      const ref = doc(db, "products", id);
       const snap = await getDoc(ref);
 
       if (snap.exists()) {
-        setProduct({ id: snap.id, ...snap.data() });
+        setProduct({
+          id: snap.id,
+          ...(snap.data() as Omit<Product, "id">),
+        });
       }
     };
 
@@ -22,8 +51,27 @@ const ProductPage = () => {
   }, [id]);
 
   if (!product) {
-    return <div className="text-center mt-10 text-white">Loading...</div>;
+    return (
+      <div className="text-center mt-10 text-white">
+        Loading...
+      </div>
+    );
   }
+
+  /* 🔥 Get best price (example: Amazon first) */
+  const price =
+    product.pricing?.amazon?.price ||
+    product.pricing?.flipkart?.price ||
+    product.pricing?.meesho?.price ||
+    product.pricing?.myntra?.price ||
+    "N/A";
+
+  const buyLink =
+    product.pricing?.amazon?.link ||
+    product.pricing?.flipkart?.link ||
+    product.pricing?.meesho?.link ||
+    product.pricing?.myntra?.link ||
+    "#";
 
   return (
     <div className="min-h-screen bg-black text-white p-8">
@@ -39,7 +87,11 @@ const ProductPage = () => {
 
         <div className="h-64 bg-gray-800 rounded mb-6 flex items-center justify-center">
           {product.image ? (
-            <img src={product.image} className="h-full object-cover rounded" />
+            <img
+              src={product.image}
+              className="h-full object-cover rounded"
+              alt={product.name}
+            />
           ) : (
             <span>No Image</span>
           )}
@@ -49,12 +101,14 @@ const ProductPage = () => {
         <p className="text-gray-400 mt-2">{product.description}</p>
 
         <p className="text-yellow-400 text-2xl font-bold mt-4">
-          ₹{product.price}
+          ₹{price}
         </p>
 
-        <button className="mt-6 w-full bg-yellow-400 text-black py-3 rounded-lg hover:bg-yellow-300">
-          Buy Now
-        </button>
+        <a href={buyLink} target="_blank">
+          <button className="mt-6 w-full bg-yellow-400 text-black py-3 rounded-lg hover:bg-yellow-300">
+            Buy Now
+          </button>
+        </a>
       </div>
     </div>
   );
