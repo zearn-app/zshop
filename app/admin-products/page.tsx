@@ -6,45 +6,84 @@ import {
   collection,
   addDoc,
   getDocs,
-  doc,
-  getDoc,
 } from "firebase/firestore";
 
+/* ================= TYPES ================= */
+
+type Category = {
+  id: string;
+  name: string;
+  fields: string[];
+};
+
+type Product = {
+  id: string;
+  name: string;
+  description: string;
+  image: string;
+  category: string;
+  specs: Record<string, string>;
+  pricing: Record<
+    string,
+    {
+      price?: string;
+      link?: string;
+    }
+  >;
+};
+
+/* ================= COMPONENT ================= */
+
 export default function AdminPage() {
-  const [categories, setCategories] = useState<any[]>([]);
-  const [selectedCat, setSelectedCat] = useState<any>(null);
-  const [products, setProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCat, setSelectedCat] = useState<Category | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
 
   const [newCategory, setNewCategory] = useState("");
   const [fields, setFields] = useState<string[]>([]);
   const [fieldInput, setFieldInput] = useState("");
 
-  const [productData, setProductData] = useState<any>({});
-  const [pricing, setPricing] = useState<any>({
+  const [productData, setProductData] = useState<any>({
+    specs: {},
+  });
+
+  const [pricing, setPricing] = useState<Product["pricing"]>({
     amazon: {},
     flipkart: {},
     meesho: {},
     myntra: {},
   });
 
-  // 🔥 Load categories
+  /* ================= LOAD DATA ================= */
+
   const loadCategories = async () => {
     const snap = await getDocs(collection(db, "categories"));
-    setCategories(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+
+    const list: Category[] = snap.docs.map((doc) => ({
+      id: doc.id,
+      ...(doc.data() as Omit<Category, "id">),
+    }));
+
+    setCategories(list);
   };
 
   useEffect(() => {
     loadCategories();
   }, []);
 
-  // 🔥 Load products by category
   const loadProducts = async (catName: string) => {
     const snap = await getDocs(collection(db, "products"));
-    const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    setProducts(list.filter(p => p.category === catName));
+
+    const list: Product[] = snap.docs.map((doc) => ({
+      id: doc.id,
+      ...(doc.data() as Omit<Product, "id">),
+    }));
+
+    setProducts(list.filter((p) => p.category === catName));
   };
 
-  // ➕ Add category
+  /* ================= CATEGORY ================= */
+
   const addCategory = async () => {
     if (!newCategory) return;
 
@@ -58,31 +97,45 @@ export default function AdminPage() {
     loadCategories();
   };
 
-  // ➕ Add field
   const addField = () => {
     if (!fieldInput) return;
+
     setFields([...fields, fieldInput]);
     setFieldInput("");
   };
 
-  // ➕ Add product
+  /* ================= PRODUCT ================= */
+
   const addProduct = async () => {
+    if (!selectedCat) return;
+
     await addDoc(collection(db, "products"), {
-      name: productData.name,
-      description: productData.description,
-      image: productData.image,
+      name: productData.name || "",
+      description: productData.description || "",
+      image: productData.image || "",
       category: selectedCat.name,
-      specs: productData.specs,
+      specs: productData.specs || {},
       pricing,
     });
 
     alert("Product added");
+
+    // reset form (optional but useful)
+    setProductData({ specs: {} });
+    setPricing({
+      amazon: {},
+      flipkart: {},
+      meesho: {},
+      myntra: {},
+    });
+
     loadProducts(selectedCat.name);
   };
 
+  /* ================= UI ================= */
+
   return (
     <div className="p-6 text-white bg-black min-h-screen">
-
       <h1 className="text-2xl font-bold mb-6">Admin Panel</h1>
 
       {/* 🧱 CREATE CATEGORY */}
@@ -109,7 +162,9 @@ export default function AdminPage() {
 
         <div className="mt-2">
           {fields.map((f, i) => (
-            <span key={i} className="mr-2 text-yellow-400">{f}</span>
+            <span key={i} className="mr-2 text-yellow-400">
+              {f}
+            </span>
           ))}
         </div>
 
@@ -144,13 +199,10 @@ export default function AdminPage() {
       {/* 🛍 PRODUCTS UNDER CATEGORY */}
       {selectedCat && (
         <div>
-          <h2 className="text-xl mb-4">
-            {selectedCat.name} Products
-          </h2>
+          <h2 className="text-xl mb-4">{selectedCat.name} Products</h2>
 
           {/* ➕ ADD PRODUCT */}
           <div className="bg-gray-900 p-4 rounded mb-6">
-
             <input
               placeholder="Product name"
               onChange={(e) =>
@@ -162,7 +214,10 @@ export default function AdminPage() {
             <input
               placeholder="Description"
               onChange={(e) =>
-                setProductData({ ...productData, description: e.target.value })
+                setProductData({
+                  ...productData,
+                  description: e.target.value,
+                })
               }
               className="p-2 bg-gray-800 rounded w-full mb-2"
             />
@@ -176,7 +231,7 @@ export default function AdminPage() {
             />
 
             {/* 🔥 Dynamic fields */}
-            {selectedCat.fields.map((field: string) => (
+            {selectedCat.fields.map((field) => (
               <input
                 key={field}
                 placeholder={field}
