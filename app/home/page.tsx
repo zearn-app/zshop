@@ -2,8 +2,6 @@
 
 import React, { useEffect, useState, Suspense } from "react";
 import { useApp } from "../app";
-import { signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase";
 import { useSearchParams, useRouter } from "next/navigation";
 import { db } from "@/lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
@@ -25,94 +23,91 @@ type Product = {
 const HomeContent = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { goToLogin } = useApp(); // ✅ removed user
+
+  const { goToLogin } = useApp();
 
   const [message, setMessage] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
   const [filtered, setFiltered] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
 
-  const user = auth.currentUser; // ✅ correct way
+  const [filter, setFilter] = useState("default");
 
-  // 🎉 Welcome message
+  const user = null; // kept UI unchanged (no logout/email display)
+
+  /* ================= WELCOME MESSAGE ================= */
+
   useEffect(() => {
     const type = searchParams.get("type");
 
-    if (type === "register") {
-      setMessage("🎉 Welcome! Please complete your profile.");
-    } else if (type === "login") {
-      setMessage("👋 Welcome back!");
-    }
+    if (type === "register") setMessage("🎉 Welcome! Please complete your profile.");
+    else if (type === "login") setMessage("👋 Welcome back!");
   }, [searchParams]);
 
-  // 🔥 Fetch products
+  /* ================= FETCH PRODUCTS ================= */
+
   useEffect(() => {
     const fetchProducts = async () => {
-      try {
-        const snapshot = await getDocs(collection(db, "products"));
-        const data: Product[] = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...(doc.data() as Omit<Product, "id">),
-        }));
+      const snapshot = await getDocs(collection(db, "products"));
 
-        setProducts(data);
-        setFiltered(data);
-      } catch (error) {
-        console.error("Error fetching products:", error);
-      }
+      const data: Product[] = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as Omit<Product, "id">),
+      }));
+
+      setProducts(data);
+      setFiltered(data);
     };
 
     fetchProducts();
   }, []);
 
-  // 🔍 Search filter
+  /* ================= SEARCH + FILTER ================= */
+
   useEffect(() => {
-    const result = products.filter((item) =>
+    let result = products.filter((item) =>
       item.name?.toLowerCase().includes(search.toLowerCase())
     );
-    setFiltered(result);
-  }, [search, products]);
 
-  const handleLogout = async () => {
-    await signOut(auth);
-    alert("Logged out");
-    goToLogin();
-  };
+    // 🔽 FILTER OPTIONS
+    if (filter === "low-high") {
+      result = [...result].sort((a, b) => a.price - b.price);
+    } else if (filter === "high-low") {
+      result = [...result].sort((a, b) => b.price - a.price);
+    } else if (filter === "name") {
+      result = [...result].sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    setFiltered(result);
+  }, [search, products, filter]);
+
+  /* ================= UI ================= */
 
   return (
     <>
-      {/* 🔝 Navbar */}
-      <nav className="flex justify-between items-center px-8 py-4 border-b border-gray-800">
-
-        {/* 👤 Profile */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-yellow-400 flex items-center justify-center text-black font-bold">
-            {user?.email?.charAt(0).toUpperCase() || "U"}
-          </div>
-          <div>
-            <p className="text-sm">{user?.email || "Guest"}</p>
-          </div>
-        </div>
-
+      {/* 🔝 NAVBAR (NO EMAIL, NO LOGOUT) */}
+      <nav className="flex justify-center items-center px-8 py-4 border-b border-gray-800">
         <h1 className="text-2xl font-bold text-yellow-400">ZShop</h1>
-
-        <button
-          onClick={handleLogout}
-          className="bg-red-500 px-4 py-2 rounded-lg hover:bg-red-400"
-        >
-          Logout
-        </button>
       </nav>
 
-      {/* 🎉 Message */}
+      {/* 👤 PROFILE CLICK AREA */}
+      <div
+        onClick={() => router.push("/profile")}
+        className="absolute top-4 left-4 w-10 h-10 rounded-full bg-yellow-400 flex items-center justify-center text-black font-bold cursor-pointer"
+        title="Profile"
+      >
+        U
+      </div>
+
+      {/* 🎉 MESSAGE */}
       {message && (
         <div className="text-center mt-6">
           <p className="text-yellow-400 text-lg font-semibold">{message}</p>
         </div>
       )}
 
-      {/* 🔍 Search */}
-      <div className="px-8 mt-6">
+      {/* 🔍 SEARCH + FILTER */}
+      <div className="px-8 mt-6 flex gap-3">
         <input
           type="text"
           placeholder="Search products..."
@@ -120,9 +115,20 @@ const HomeContent = () => {
           onChange={(e) => setSearch(e.target.value)}
           className="w-full p-3 rounded-lg bg-gray-900 border border-gray-700 outline-none"
         />
+
+        <select
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="p-3 bg-gray-900 border border-gray-700 rounded-lg"
+        >
+          <option value="default">Default</option>
+          <option value="name">Name A-Z</option>
+          <option value="low-high">Price Low → High</option>
+          <option value="high-low">Price High → Low</option>
+        </select>
       </div>
 
-      {/* 🛍 Products */}
+      {/* 🛍 PRODUCTS */}
       <div className="px-8 py-10">
         <h3 className="text-2xl font-semibold text-yellow-400 mb-6">
           Products
@@ -166,6 +172,14 @@ const HomeContent = () => {
           </div>
         )}
       </div>
+
+      {/* 🛒 CART BUTTON (BOTTOM LEFT FIXED) */}
+      <button
+        onClick={() => router.push("/cart")}
+        className="fixed bottom-5 left-5 bg-yellow-400 text-black px-5 py-3 rounded-full shadow-lg hover:bg-yellow-300"
+      >
+        🛒 Cart
+      </button>
     </>
   );
 };
