@@ -10,6 +10,7 @@ import {
   doc,
   query,
   where,
+  updateDoc,
 } from "firebase/firestore";
 
 /* ================= TYPES ================= */
@@ -42,6 +43,10 @@ export default function AdminPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCat, setSelectedCat] = useState<Category | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
+
+  // Editing States
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
 
   // Category State
   const [newCategory, setNewCategory] = useState("");
@@ -79,7 +84,6 @@ export default function AdminPage() {
   }, []);
 
   const loadProducts = async (catName: string) => {
-    // Optimized: Only fetch products for the specific category
     const q = query(collection(db, "products"), where("category", "==", catName));
     const snap = await getDocs(q);
     const list = snap.docs.map((doc) => ({
@@ -91,16 +95,30 @@ export default function AdminPage() {
 
   /* ================= ACTIONS ================= */
 
-  const addCategory = async () => {
+  const saveCategory = async () => {
     if (!newCategory || fields.length === 0) return alert("Add a name and fields");
-    await addDoc(collection(db, "categories"), { name: newCategory, fields });
+
+    if (editingCategoryId) {
+      await updateDoc(doc(db, "categories", editingCategoryId), { name: newCategory, fields });
+      setEditingCategoryId(null);
+    } else {
+      await addDoc(collection(db, "categories"), { name: newCategory, fields });
+    }
+
     setNewCategory("");
     setFields([]);
     loadCategories();
   };
 
+  const startEditCategory = (cat: Category) => {
+    setEditingCategoryId(cat.id);
+    setNewCategory(cat.name);
+    setFields(cat.fields);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const deleteCategory = async (id: string) => {
-    if (!confirm("Delete category and all associated fields?")) return;
+    if (!confirm("Delete category? This won't delete the products inside, but they will become unlinked.")) return;
     await deleteDoc(doc(db, "categories", id));
     loadCategories();
     if (selectedCat?.id === id) setSelectedCat(null);
@@ -112,18 +130,29 @@ export default function AdminPage() {
     setFieldInput("");
   };
 
-  const addProduct = async () => {
+  const removeField = (index: number) => {
+    setFields(fields.filter((_, i) => i !== index));
+  };
+
+  const saveProduct = async () => {
     if (!selectedCat) return;
     if (!productData.name) return alert("Product name is required");
 
-    await addDoc(collection(db, "products"), {
+    const payload = {
       ...productData,
       category: selectedCat.name,
       pricing,
-    });
+    };
 
-    alert("Product added successfully!");
-    
+    if (editingProductId) {
+      await updateDoc(doc(db, "products", editingProductId), payload);
+      setEditingProductId(null);
+      alert("Product updated!");
+    } else {
+      await addDoc(collection(db, "products"), payload);
+      alert("Product added!");
+    }
+
     // Reset Form
     setProductData({ name: "", description: "", image: "", specs: {} });
     setPricing({
@@ -134,6 +163,17 @@ export default function AdminPage() {
     });
 
     loadProducts(selectedCat.name);
+  };
+
+  const startEditProduct = (p: Product) => {
+    setEditingProductId(p.id);
+    setProductData({
+      name: p.name,
+      description: p.description,
+      image: p.image,
+      specs: p.specs || {},
+    });
+    setPricing(p.pricing);
   };
 
   const deleteProduct = async (id: string) => {
@@ -148,9 +188,11 @@ export default function AdminPage() {
     <div className="p-6 text-white bg-black min-h-screen font-sans">
       <h1 className="text-3xl font-bold mb-8 border-b border-gray-800 pb-4">Admin Panel</h1>
 
-      {/* 🧱 CREATE CATEGORY */}
-      <div className="mb-10 bg-gray-900 p-6 rounded-xl border border-gray-800">
-        <h2 className="text-xl font-semibold mb-4 text-blue-400">1. Create New Category</h2>
+      {/* 🧱 CREATE/EDIT CATEGORY CARD */}
+      <div className="mb-10 bg-gray-900 p-6 rounded-xl border border-blue-900/30 shadow-xl">
+        <h2 className="text-xl font-semibold mb-4 text-blue-400">
+          {editingCategoryId ? "Edit Category" : "1. Create New Category"}
+        </h2>
         <div className="flex flex-wrap gap-2 mb-4">
           <input
             placeholder="Category name (e.g. Mobiles)"
@@ -171,20 +213,28 @@ export default function AdminPage() {
 
         <div className="flex flex-wrap gap-2 mb-4">
           {fields.map((f, i) => (
-            <span key={i} className="bg-gray-700 px-3 py-1 rounded-full text-sm text-yellow-400 border border-yellow-900/30">
+            <span key={i} className="bg-gray-700 px-3 py-1 rounded-full text-sm text-yellow-400 border border-yellow-900/30 flex items-center gap-2">
               {f}
+              <button onClick={() => removeField(i)} className="text-red-400 hover:text-red-200">✕</button>
             </span>
           ))}
         </div>
 
-        <button onClick={addCategory} className="bg-green-600 hover:bg-green-500 px-6 py-2 rounded font-bold transition">
-          Save Category
-        </button>
+        <div className="flex gap-2">
+          <button onClick={saveCategory} className="bg-green-600 hover:bg-green-500 px-6 py-2 rounded font-bold transition">
+            {editingCategoryId ? "Update Category" : "Save Category"}
+          </button>
+          {editingCategoryId && (
+            <button onClick={() => {setEditingCategoryId(null); setNewCategory(""); setFields([]);}} className="bg-gray-700 px-6 py-2 rounded font-bold">
+              Cancel
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* 📦 CATEGORY LIST */}
-      <div className="mb-10">
-        <h2 className="text-xl font-semibold mb-4 text-blue-400">2. Select Category</h2>
+      {/* 📦 CATEGORY SELECTOR CARD */}
+      <div className="mb-10 bg-gray-900/50 p-6 rounded-xl border border-gray-800">
+        <h2 className="text-xl font-semibold mb-4 text-blue-400">2. Select Category to Manage</h2>
         <div className="flex gap-3 flex-wrap">
           {categories.map((cat) => (
             <div key={cat.id} className="group relative">
@@ -195,18 +245,16 @@ export default function AdminPage() {
                 }}
                 className={`px-4 py-2 rounded-lg border transition ${
                   selectedCat?.id === cat.id 
-                  ? "bg-blue-600 border-blue-400" 
+                  ? "bg-blue-600 border-blue-400 shadow-lg shadow-blue-900/20" 
                   : "bg-gray-800 border-gray-700 hover:border-gray-500"
                 }`}
               >
                 {cat.name}
               </button>
-              <button 
-                onClick={() => deleteCategory(cat.id)}
-                className="absolute -top-2 -right-2 bg-red-600 rounded-full w-5 h-5 text-xs hidden group-hover:flex items-center justify-center"
-              >
-                ✕
-              </button>
+              <div className="absolute -top-3 -right-2 hidden group-hover:flex gap-1">
+                <button onClick={() => startEditCategory(cat)} className="bg-yellow-600 rounded-full w-6 h-6 text-xs flex items-center justify-center">✎</button>
+                <button onClick={() => deleteCategory(cat.id)} className="bg-red-600 rounded-full w-6 h-6 text-xs flex items-center justify-center">✕</button>
+              </div>
             </div>
           ))}
         </div>
@@ -214,51 +262,58 @@ export default function AdminPage() {
 
       {/* 🛍 PRODUCTS SECTION */}
       {selectedCat && (
-        <div className="animate-in fade-in duration-300">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           <h2 className="text-2xl font-bold mb-6 text-green-400 border-b border-gray-800 pb-2">
             Managing: {selectedCat.name}
           </h2>
 
           <div className="grid lg:grid-cols-2 gap-8">
-            {/* ➕ ADD PRODUCT FORM */}
+            {/* ➕ ADD/EDIT PRODUCT FORM CARD */}
             <div className="bg-gray-900 p-6 rounded-xl border border-gray-800 h-fit sticky top-6">
-              <h3 className="text-lg font-medium mb-4">Add New {selectedCat.name}</h3>
-              <input
-                placeholder="Product Name"
-                value={productData.name}
-                onChange={(e) => setProductData({ ...productData, name: e.target.value })}
-                className="p-2 bg-gray-800 rounded w-full mb-3 border border-gray-700"
-              />
-              <textarea
-                placeholder="Description"
-                value={productData.description}
-                onChange={(e) => setProductData({ ...productData, description: e.target.value })}
-                className="p-2 bg-gray-800 rounded w-full mb-3 border border-gray-700 h-20"
-              />
-              <input
-                placeholder="Image URL"
-                value={productData.image}
-                onChange={(e) => setProductData({ ...productData, image: e.target.value })}
-                className="p-2 bg-gray-800 rounded w-full mb-6 border border-gray-700"
-              />
+              <h3 className="text-lg font-medium mb-4 text-blue-300">
+                {editingProductId ? `Editing Product` : `Add New ${selectedCat.name}`}
+              </h3>
+              
+              <div className="space-y-3">
+                <input
+                  placeholder="Product Name"
+                  value={productData.name}
+                  onChange={(e) => setProductData({ ...productData, name: e.target.value })}
+                  className="p-2 bg-gray-800 rounded w-full border border-gray-700"
+                />
+                <textarea
+                  placeholder="Description"
+                  value={productData.description}
+                  onChange={(e) => setProductData({ ...productData, description: e.target.value })}
+                  className="p-2 bg-gray-800 rounded w-full border border-gray-700 h-20"
+                />
+                <input
+                  placeholder="Image URL"
+                  value={productData.image}
+                  onChange={(e) => setProductData({ ...productData, image: e.target.value })}
+                  className="p-2 bg-gray-800 rounded w-full border border-gray-700"
+                />
+              </div>
 
-              <p className="text-sm font-bold text-gray-500 mb-3 uppercase tracking-wider">Specifications</p>
-              {selectedCat.fields.map((field) => (
-                <div key={field} className="flex items-center mb-2 gap-2">
-                  <span className="text-sm text-gray-400 w-24 truncate">{field}:</span>
-                  <input
-                    placeholder={`Enter ${field}`}
-                    value={productData.specs[field] || ""}
-                    onChange={(e) =>
-                      setProductData({
-                        ...productData,
-                        specs: { ...productData.specs, [field]: e.target.value },
-                      })
-                    }
-                    className="p-2 bg-gray-800 rounded flex-1 border border-gray-700"
-                  />
-                </div>
-              ))}
+              <p className="text-sm font-bold text-gray-500 mt-6 mb-3 uppercase tracking-wider">Specifications</p>
+              <div className="space-y-2">
+                {selectedCat.fields.map((field) => (
+                  <div key={field} className="flex items-center gap-2">
+                    <span className="text-sm text-gray-400 w-24 truncate">{field}:</span>
+                    <input
+                      placeholder={`Enter ${field}`}
+                      value={productData.specs[field] || ""}
+                      onChange={(e) =>
+                        setProductData({
+                          ...productData,
+                          specs: { ...productData.specs, [field]: e.target.value },
+                        })
+                      }
+                      className="p-2 bg-gray-800 rounded flex-1 border border-gray-700"
+                    />
+                  </div>
+                ))}
+              </div>
 
               <p className="text-sm font-bold text-gray-500 mt-6 mb-3 uppercase tracking-wider">Marketplace Links</p>
               {["amazon", "flipkart", "meesho", "myntra"].map((site) => (
@@ -287,31 +342,55 @@ export default function AdminPage() {
                 </div>
               ))}
 
-              <button
-                onClick={addProduct}
-                className="w-full bg-green-600 hover:bg-green-500 py-3 rounded-lg font-bold mt-4 transition shadow-lg shadow-green-900/20"
-              >
-                Upload Product
-              </button>
+              <div className="flex gap-2 mt-4">
+                <button
+                  onClick={saveProduct}
+                  className="flex-1 bg-green-600 hover:bg-green-500 py-3 rounded-lg font-bold transition shadow-lg shadow-green-900/20"
+                >
+                  {editingProductId ? "Update Product" : "Upload Product"}
+                </button>
+                {editingProductId && (
+                  <button 
+                    onClick={() => {
+                      setEditingProductId(null);
+                      setProductData({ name: "", description: "", image: "", specs: {} });
+                    }}
+                    className="bg-gray-700 px-4 rounded-lg"
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
             </div>
 
-            {/* 📋 PRODUCT LIST */}
+            {/* 📋 PRODUCT LIST CARDS */}
             <div>
               <h3 className="text-lg font-medium mb-4">Existing Products ({products.length})</h3>
               <div className="grid gap-4">
                 {products.length === 0 && <p className="text-gray-600 italic">No products found in this category.</p>}
                 {products.map((p) => (
-                  <div key={p.id} className="bg-gray-800 p-4 rounded-lg flex justify-between items-start border border-gray-700">
-                    <div>
-                      <p className="font-bold text-lg">{p.name}</p>
-                      <p className="text-sm text-gray-400 line-clamp-2">{p.description}</p>
+                  <div key={p.id} className="bg-gray-800 p-4 rounded-lg flex justify-between items-center border border-gray-700 hover:border-gray-500 transition">
+                    <div className="flex items-center gap-4">
+                      {p.image && <img src={p.image} className="w-12 h-12 object-cover rounded bg-gray-900" alt="" />}
+                      <div>
+                        <p className="font-bold text-lg">{p.name}</p>
+                        <p className="text-xs text-gray-400">ID: {p.id}</p>
+                      </div>
                     </div>
-                    <button 
-                      onClick={() => deleteProduct(p.id)}
-                      className="text-red-500 hover:bg-red-500/10 p-2 rounded transition"
-                    >
-                      Delete
-                    </button>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => startEditProduct(p)}
+                        className="text-yellow-500 hover:bg-yellow-500/10 px-3 py-1 rounded border border-yellow-900/30 transition text-sm"
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        onClick={() => deleteProduct(p.id)}
+                        className="text-red-500 hover:bg-red-500/10 px-3 py-1 rounded border border-red-900/30 transition text-sm"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
