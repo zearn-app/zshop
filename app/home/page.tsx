@@ -9,17 +9,30 @@ import { db } from "@/lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
 
 /**
+ * 🔹 Product Type
+ */
+type Product = {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  image?: string;
+};
+
+/**
  * 🔹 Inner component
  */
 const HomeContent = () => {
   const searchParams = useSearchParams();
-  const router = useRouter(); // ✅ added
-  const { goToLogin, user } = useApp();
+  const router = useRouter();
+  const { goToLogin } = useApp(); // ✅ removed user
 
   const [message, setMessage] = useState("");
-  const [products, setProducts] = useState<any[]>([]);
-  const [filtered, setFiltered] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [filtered, setFiltered] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
+
+  const user = auth.currentUser; // ✅ correct way
 
   // 🎉 Welcome message
   useEffect(() => {
@@ -35,13 +48,18 @@ const HomeContent = () => {
   // 🔥 Fetch products
   useEffect(() => {
     const fetchProducts = async () => {
-      const snapshot = await getDocs(collection(db, "products"));
-      const data = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setProducts(data);
-      setFiltered(data);
+      try {
+        const snapshot = await getDocs(collection(db, "products"));
+        const data: Product[] = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...(doc.data() as Omit<Product, "id">),
+        }));
+
+        setProducts(data);
+        setFiltered(data);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      }
     };
 
     fetchProducts();
@@ -50,7 +68,7 @@ const HomeContent = () => {
   // 🔍 Search filter
   useEffect(() => {
     const result = products.filter((item) =>
-      item.name.toLowerCase().includes(search.toLowerCase())
+      item.name?.toLowerCase().includes(search.toLowerCase())
     );
     setFiltered(result);
   }, [search, products]);
@@ -69,10 +87,10 @@ const HomeContent = () => {
         {/* 👤 Profile */}
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-yellow-400 flex items-center justify-center text-black font-bold">
-            {user?.email?.charAt(0).toUpperCase()}
+            {user?.email?.charAt(0).toUpperCase() || "U"}
           </div>
           <div>
-            <p className="text-sm">{user?.email}</p>
+            <p className="text-sm">{user?.email || "Guest"}</p>
           </div>
         </div>
 
@@ -117,20 +135,28 @@ const HomeContent = () => {
             {filtered.map((item) => (
               <div
                 key={item.id}
-                onClick={() => router.push(`/product/${item.id}`)} // ✅ added
+                onClick={() => router.push(`/product/${item.id}`)}
                 className="bg-gray-900 p-4 rounded-xl shadow hover:scale-105 transition cursor-pointer"
               >
                 <div className="h-40 bg-gray-800 rounded mb-4 flex items-center justify-center">
                   {item.image ? (
-                    <img src={item.image} className="h-full object-cover rounded" />
+                    <img
+                      src={item.image}
+                      className="h-full object-cover rounded"
+                      alt={item.name}
+                    />
                   ) : (
                     <span>No Image</span>
                   )}
                 </div>
 
                 <h4 className="font-semibold">{item.name}</h4>
-                <p className="text-gray-400 text-sm">{item.description}</p>
-                <p className="text-yellow-400 font-bold mt-2">₹{item.price}</p>
+                <p className="text-gray-400 text-sm">
+                  {item.description || "No description"}
+                </p>
+                <p className="text-yellow-400 font-bold mt-2">
+                  ₹{item.price}
+                </p>
 
                 <button className="mt-3 w-full bg-yellow-400 text-black py-2 rounded-lg hover:bg-yellow-300">
                   Buy Now
