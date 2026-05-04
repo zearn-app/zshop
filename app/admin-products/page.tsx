@@ -2,8 +2,22 @@
 
 import { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, getDocs, query, where, serverTimestamp } from "firebase/firestore";
-import { Plus, Save, Trash2, Package, Layers, CheckCircle2 } from "lucide-react";
+import {
+  collection,
+  addDoc,
+  getDocs,
+  query,
+  where,
+  serverTimestamp,
+} from "firebase/firestore";
+import {
+  Plus,
+  Save,
+  Trash2,
+  Package,
+  Layers,
+  CheckCircle2,
+} from "lucide-react";
 
 /* ================= TYPES ================= */
 
@@ -16,7 +30,10 @@ type Category = {
 };
 
 type PricingItem = { enabled: boolean; price: string; link: string };
-type Pricing = Record<"amazon" | "flipkart" | "meesho" | "myntra", PricingItem>;
+type Pricing = Record<
+  "amazon" | "flipkart" | "meesho" | "myntra",
+  PricingItem
+>;
 
 type Product = {
   id: string;
@@ -46,10 +63,10 @@ export default function AdminPage() {
   const [tempGroups, setTempGroups] = useState<SpecGroup[]>([]);
   const [curGroupName, setCurGroupName] = useState("");
 
-  /* 🆕 BULK INPUT STATE */
+  /* BULK INPUT */
   const [bulkSpecInput, setBulkSpecInput] = useState("");
 
-  /* PRODUCT STATE */
+  /* PRODUCT */
   const [productData, setProductData] = useState({
     name: "",
     description: "",
@@ -59,30 +76,47 @@ export default function AdminPage() {
 
   const [pricing, setPricing] = useState<Pricing>(INITIAL_PRICING);
 
-  useEffect(() => { loadCategories(); }, []);
+  useEffect(() => {
+    loadCategories();
+  }, []);
 
   const loadCategories = async () => {
     const snap = await getDocs(collection(db, "categories"));
-    setCategories(snap.docs.map(d => ({ id: d.id, ...d.data() } as Category)));
+    setCategories(
+      snap.docs.map((d) => ({ id: d.id, ...d.data() } as Category))
+    );
   };
 
   const loadProducts = async (catName: string) => {
     setLoading(true);
-    const q = query(collection(db, "products"), where("category", "==", catName));
+    const q = query(
+      collection(db, "products"),
+      where("category", "==", catName)
+    );
     const snap = await getDocs(q);
-    setProducts(snap.docs.map(d => ({ id: d.id, ...d.data() } as Product)));
+    setProducts(
+      snap.docs.map((d) => ({ id: d.id, ...d.data() } as Product))
+    );
     setLoading(false);
   };
 
-  /* ================= NEW BULK PARSER ================= */
+  /* ================= BULK PARSER ================= */
 
   const handlePasteSpecGroups = async () => {
-    if (!bulkSpecInput || !newCatName) {
-      return alert("Enter category name + paste spec JSON");
-    }
+    if (!bulkSpecInput || !newCatName)
+      return alert("Enter category name + paste spec");
 
     try {
-      const parsed: SpecGroup[] = JSON.parse(bulkSpecInput);
+      let clean = bulkSpecInput.trim();
+
+      // 🔥 supports JS + JSON
+      if (clean.startsWith("const")) {
+        clean = clean
+          .replace(/const\s+\w+\s*=\s*/, "")
+          .replace(/;$/, "");
+      }
+
+      const parsed: SpecGroup[] = JSON.parse(clean);
 
       await addDoc(collection(db, "categories"), {
         name: newCatName,
@@ -94,18 +128,18 @@ export default function AdminPage() {
       setTempGroups([]);
       loadCategories();
 
-      alert("✅ Category created from JSON!");
+      alert("✅ Category created!");
     } catch (err) {
       console.error(err);
-      alert("❌ Invalid JSON format");
+      alert("❌ Invalid format");
     }
   };
 
-  /* ================= HANDLERS ================= */
+  /* ================= CATEGORY ================= */
 
   const handleSaveCategory = async () => {
     if (!newCatName || tempGroups.length === 0)
-      return alert("Enter name and at least one group");
+      return alert("Enter name + groups");
 
     await addDoc(collection(db, "categories"), {
       name: newCatName,
@@ -116,6 +150,8 @@ export default function AdminPage() {
     setTempGroups([]);
     loadCategories();
   };
+
+  /* ================= PRODUCT ================= */
 
   const handleSaveProduct = async () => {
     if (!selectedCat) return;
@@ -129,10 +165,15 @@ export default function AdminPage() {
       createdAt: serverTimestamp(),
     });
 
-    setProductData({ name: "", description: "", image: "", specs: {} });
+    setProductData({
+      name: "",
+      description: "",
+      image: "",
+      specs: {},
+    });
+
     setPricing(INITIAL_PRICING);
     loadProducts(selectedCat.name);
-
     setLoading(false);
   };
 
@@ -152,15 +193,15 @@ export default function AdminPage() {
               className="w-full bg-zinc-800 rounded-lg p-2 mb-4"
               placeholder="Category Name"
               value={newCatName}
-              onChange={e => setNewCatName(e.target.value)}
+              onChange={(e) => setNewCatName(e.target.value)}
             />
 
-            {/* 🆕 BULK JSON INPUT */}
+            {/* BULK */}
             <textarea
               className="w-full bg-zinc-800 rounded-lg p-3 text-xs mb-3 h-32"
-              placeholder="Paste specGroups JSON here..."
+              placeholder="Paste specGroups..."
               value={bulkSpecInput}
-              onChange={e => setBulkSpecInput(e.target.value)}
+              onChange={(e) => setBulkSpecInput(e.target.value)}
             />
 
             <button
@@ -170,18 +211,21 @@ export default function AdminPage() {
               🚀 Create from JSON
             </button>
 
-            {/* EXISTING UI (UNCHANGED) */}
+            {/* EXISTING */}
             <div className="flex gap-2 mb-4">
               <input
                 className="flex-1 bg-zinc-800 rounded p-2 text-sm"
                 placeholder="Group"
                 value={curGroupName}
-                onChange={e => setCurGroupName(e.target.value)}
+                onChange={(e) => setCurGroupName(e.target.value)}
               />
               <button
                 onClick={() => {
                   if (curGroupName)
-                    setTempGroups([...tempGroups, { groupName: curGroupName, fields: [] }]);
+                    setTempGroups([
+                      ...tempGroups,
+                      { groupName: curGroupName, fields: [] },
+                    ]);
                   setCurGroupName("");
                 }}
                 className="bg-zinc-700 p-2 rounded"
@@ -200,7 +244,7 @@ export default function AdminPage() {
 
           {/* CATEGORY SELECT */}
           <div className="flex flex-wrap gap-2">
-            {categories.map(c => (
+            {categories.map((c) => (
               <button
                 key={c.id}
                 onClick={() => {
@@ -215,9 +259,87 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* RIGHT SIDE (UNCHANGED) */}
-        <div className="lg:col-span-8">
-          {/* KEEP YOUR EXISTING PRODUCT UI EXACTLY SAME */}
+        {/* RIGHT - PRODUCT UI RESTORED */}
+        <div className="lg:col-span-8 space-y-6">
+
+          {selectedCat && (
+            <div className="bg-zinc-900 p-6 rounded-xl">
+              <h2 className="text-xl mb-4">Add Product</h2>
+
+              <input
+                className="w-full bg-zinc-800 p-2 mb-3 rounded"
+                placeholder="Product Name"
+                value={productData.name}
+                onChange={(e) =>
+                  setProductData({ ...productData, name: e.target.value })
+                }
+              />
+
+              <textarea
+                className="w-full bg-zinc-800 p-2 mb-3 rounded"
+                placeholder="Description"
+                value={productData.description}
+                onChange={(e) =>
+                  setProductData({
+                    ...productData,
+                    description: e.target.value,
+                  })
+                }
+              />
+
+              <input
+                className="w-full bg-zinc-800 p-2 mb-3 rounded"
+                placeholder="Image URL"
+                value={productData.image}
+                onChange={(e) =>
+                  setProductData({ ...productData, image: e.target.value })
+                }
+              />
+
+              {/* SPECS */}
+              {selectedCat.specGroups.map((group, i) => (
+                <div key={i} className="mb-4">
+                  <h3 className="text-sm text-blue-400">{group.groupName}</h3>
+
+                  {group.fields.map((field, idx) => (
+                    <input
+                      key={idx}
+                      className="w-full bg-zinc-800 p-2 mt-1 rounded"
+                      placeholder={field}
+                      value={productData.specs[field] || ""}
+                      onChange={(e) =>
+                        setProductData({
+                          ...productData,
+                          specs: {
+                            ...productData.specs,
+                            [field]: e.target.value,
+                          },
+                        })
+                      }
+                    />
+                  ))}
+                </div>
+              ))}
+
+              <button
+                onClick={handleSaveProduct}
+                className="w-full bg-green-600 py-3 rounded-xl flex justify-center gap-2"
+              >
+                <CheckCircle2 /> Save Product
+              </button>
+            </div>
+          )}
+
+          {/* PRODUCT LIST */}
+          {products.map((p) => (
+            <div
+              key={p.id}
+              className="bg-zinc-900 p-4 rounded flex justify-between"
+            >
+              <span>{p.name}</span>
+              <Trash2 size={16} />
+            </div>
+          ))}
         </div>
       </div>
     </div>
