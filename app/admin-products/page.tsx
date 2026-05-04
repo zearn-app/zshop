@@ -332,6 +332,29 @@ const handlePasteProduct = async () => {
           </div>
         </div>
 
+
+
+{/* 🆕 PRODUCT JSON INPUT */}
+<div className="bg-zinc-900 p-4 rounded-xl mb-6">
+  <h3 className="text-sm mb-2 text-purple-400">Paste Product JSON</h3>
+
+  <textarea
+    className="w-full bg-zinc-800 rounded-lg p-3 text-xs mb-3 h-28"
+    placeholder="Paste product JSON..."
+    value={bulkProductInput}
+    onChange={(e) => setBulkProductInput(e.target.value)}
+  />
+
+  <button
+    onClick={handlePasteProduct}
+    className="w-full bg-purple-600 py-2 rounded-lg"
+  >
+    🚀 Create Product from JSON
+  </button>
+</div>
+
+
+
         {/* RIGHT - PRODUCT UI RESTORED */}
         <div className="lg:col-span-8 space-y-6">
 
