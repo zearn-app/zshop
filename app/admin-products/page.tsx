@@ -66,6 +66,9 @@ export default function AdminPage() {
   /* BULK INPUT */
   const [bulkSpecInput, setBulkSpecInput] = useState("");
 
+// 🔥 ADD THIS STATE (below bulkSpecInput)
+const [bulkProductInput, setBulkProductInput] = useState("");
+
   /* PRODUCT */
   const [productData, setProductData] = useState({
     name: "",
