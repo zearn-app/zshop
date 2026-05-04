@@ -94,13 +94,12 @@ const [bulkProductInput, setBulkProductInput] = useState("");
 
 const handlePasteProduct = async () => {
   if (!selectedCat) return alert("Select category first");
-
   if (!bulkProductInput) return alert("Paste product JSON");
 
   try {
     let clean = bulkProductInput.trim();
 
-    // support JS input
+    // ✅ Support JS format
     if (clean.startsWith("const")) {
       clean = clean
         .replace(/const\s+\w+\s*=\s*/, "")
@@ -109,34 +108,40 @@ const handlePasteProduct = async () => {
 
     const parsed = JSON.parse(clean);
 
-    // 🔥 normalize specs (ensure all fields exist)
+    /* ================= SPECS NORMALIZE ================= */
+
     const normalizedSpecs: Record<string, string> = {};
 
-    selectedCat.specGroups.forEach(group => {
-      group.fields.forEach(field => {
+    selectedCat.specGroups.forEach((group) => {
+      group.fields.forEach((field) => {
         normalizedSpecs[field] = parsed.specs?.[field] || "";
       });
     });
 
-    // 🔥 normalize pricing
-    const normalizedPricing: Pricing = {
+    /* ================= PRICING NORMALIZE ================= */
+
+    const basePricing: Pricing = {
       amazon: { enabled: false, price: "", link: "" },
       flipkart: { enabled: false, price: "", link: "" },
       meesho: { enabled: false, price: "", link: "" },
       myntra: { enabled: false, price: "", link: "" },
     };
 
-    if (parsed.pricing) {
-      Object.keys(normalizedPricing).forEach((key) => {
-        if (parsed.pricing[key]) {
-          normalizedPricing[key as keyof Pricing] = {
+    const normalizedPricing: Pricing = { ...basePricing };
+
+    if (parsed.pricing && typeof parsed.pricing === "object") {
+      Object.keys(parsed.pricing).forEach((platform) => {
+        if (normalizedPricing[platform as keyof Pricing]) {
+          normalizedPricing[platform as keyof Pricing] = {
             enabled: true,
-            price: parsed.pricing[key].price || "",
-            link: parsed.pricing[key].link || "",
+            price: parsed.pricing[platform]?.price || "",
+            link: parsed.pricing[platform]?.link || "",
           };
         }
       });
     }
+
+    /* ================= SAVE ================= */
 
     await addDoc(collection(db, "products"), {
       name: parsed.name || "",
@@ -157,8 +162,6 @@ const handlePasteProduct = async () => {
     alert("❌ Invalid product JSON");
   }
 };
-
-
 
   const loadProducts = async (catName: string) => {
     setLoading(true);
