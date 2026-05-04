@@ -44,7 +44,7 @@ const RegisterPage: React.FC = () => {
       alert("Account created successfully 🎉");
 
       // 👉 Redirect to home with register message
-      goToHome("?type=register");
+      goToHome({ type: "login" });
 
     } catch (error: any) {
       console.error("REGISTER ERROR:", error);
