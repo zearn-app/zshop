@@ -1,143 +1,73 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { auth } from "@/lib/firebase";
-import { signOut, onAuthStateChanged, User } from "firebase/auth";
-import { useRouter } from "next/navigation";
+import { onAuthStateChanged, updateProfile, User } from "firebase/auth";
 
-const ProfilePage = () => {
-  const router = useRouter();
-
+export default function ProfilePage() {
   const [user, setUser] = useState<User | null>(null);
   const [name, setName] = useState("");
-  const [editing, setEditing] = useState(false);
-
-  /* ================= AUTH ================= */
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
-      if (!u) {
-        router.push("/login");
-      } else {
+      if (u) {
         setUser(u);
         setName(u.displayName || "");
       }
     });
 
     return () => unsub();
-  }, [router]);
+  }, []);
 
-  /* ================= ACTIONS ================= */
-
-  const handleLogout = async () => {
-    await signOut(auth);
-    router.push("/login");
-  };
-
-  const handleSave = async () => {
+  const handleUpdate = async () => {
     if (!user) return;
 
     try {
-      await user.updateProfile({
+      setLoading(true);
+
+      await updateProfile(user, {
         displayName: name,
       });
 
-      alert("Profile updated!");
-      setEditing(false);
+      alert("Profile updated successfully!");
     } catch (err) {
       console.error(err);
+      alert("Error updating profile");
+    } finally {
+      setLoading(false);
     }
   };
 
-  /* ================= UI ================= */
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-gray-800 text-white flex justify-center items-center p-6">
+    <div className="min-h-screen bg-[#0a0a0a] text-white flex items-center justify-center">
+      <div className="bg-[#111] p-6 rounded-2xl w-full max-w-md">
+        <h1 className="text-xl mb-4 text-green-400">Profile</h1>
 
-      <div className="w-full max-w-md bg-gray-900 rounded-2xl p-6 shadow-xl border border-gray-800">
-
-        {/* 🔙 BACK */}
-        <button
-          onClick={() => router.push("/home")}
-          className="text-sm text-gray-400 hover:text-white mb-4"
-        >
-          ← Back
-        </button>
-
-        {/* 👤 PROFILE HEADER */}
-        <div className="flex flex-col items-center mb-6">
-
-          <div className="w-20 h-20 rounded-full bg-yellow-400 flex items-center justify-center text-black text-3xl font-bold">
-            {user?.email?.charAt(0).toUpperCase() || "U"}
-          </div>
-
-          <p className="mt-3 text-lg font-semibold">
+        <div className="mb-3">
+          <label className="text-sm text-gray-400">Email</label>
+          <div className="bg-[#222] p-2 rounded mt-1">
             {user?.email}
-          </p>
-
-          <p className="text-gray-400 text-sm">
-            UID: {user?.uid?.slice(0, 8)}...
-          </p>
-
-        </div>
-
-        {/* ✏️ NAME EDIT */}
-        <div className="mb-6">
-          <label className="text-sm text-gray-400">Name</label>
-
-          {editing ? (
-            <div className="flex gap-2 mt-1">
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="flex-1 p-2 rounded bg-gray-800 border border-gray-700 outline-none"
-              />
-              <button
-                onClick={handleSave}
-                className="bg-green-600 px-3 rounded"
-              >
-                Save
-              </button>
-            </div>
-          ) : (
-            <div className="flex justify-between items-center mt-1">
-              <p>{name || "No name set"}</p>
-              <button
-                onClick={() => setEditing(true)}
-                className="text-yellow-400 text-sm"
-              >
-                Edit
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* 📦 INFO CARDS */}
-        <div className="space-y-3 mb-6">
-
-          <div className="bg-gray-800 p-3 rounded-lg">
-            <p className="text-sm text-gray-400">Email</p>
-            <p>{user?.email}</p>
           </div>
-
-          <div className="bg-gray-800 p-3 rounded-lg">
-            <p className="text-sm text-gray-400">Account Type</p>
-            <p>Email/Password</p>
-          </div>
-
         </div>
 
-        {/* 🚪 LOGOUT */}
+        <div className="mb-3">
+          <label className="text-sm text-gray-400">Display Name</label>
+          <input
+            className="w-full p-2 rounded bg-[#222] mt-1"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </div>
+
         <button
-          onClick={handleLogout}
-          className="w-full bg-red-500 py-3 rounded-lg hover:bg-red-400 font-semibold"
+          onClick={handleUpdate}
+          disabled={loading}
+          className="w-full bg-green-500 py-2 rounded mt-4"
         >
-          Logout
+          {loading ? "Updating..." : "Update Profile"}
         </button>
-
       </div>
     </div>
   );
-};
-
-export default ProfilePage;
+}
