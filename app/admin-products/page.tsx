@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, getDocs, query, where, serverTimestamp } from "firebase/firestore";
+// Standard imports for lucide-react
 import { Plus, Save, Trash2, Package, Layers, ExternalLink, CheckCircle2 } from "lucide-react";
 
 /* ================= TYPES (Refined) ================= */
@@ -55,24 +56,39 @@ export default function AdminPage() {
   useEffect(() => { loadCategories(); }, []);
 
   const loadCategories = async () => {
-    const snap = await getDocs(collection(db, "categories"));
-    setCategories(snap.docs.map(d => ({ id: d.id, ...d.data() } as Category)));
+    try {
+      const snap = await getDocs(collection(db, "categories"));
+      setCategories(snap.docs.map(d => ({ id: d.id, ...d.data() } as Category)));
+    } catch (error) {
+      console.error("Error loading categories:", error);
+    }
   };
 
   const loadProducts = async (catName: string) => {
     setLoading(true);
-    const q = query(collection(db, "products"), where("category", "==", catName));
-    const snap = await getDocs(q);
-    setProducts(snap.docs.map(d => ({ id: d.id, ...d.data() } as Product)));
-    setLoading(false);
+    try {
+      const q = query(collection(db, "products"), where("category", "==", catName));
+      const snap = await getDocs(q);
+      setProducts(snap.docs.map(d => ({ id: d.id, ...d.data() } as Product)));
+    } catch (error) {
+      console.error("Error loading products:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   /* ================= HANDLERS ================= */
 
   const handleSaveCategory = async () => {
     if (!newCatName || tempGroups.length === 0) return alert("Enter name and at least one group");
-    await addDoc(collection(db, "categories"), { name: newCatName, specGroups: tempGroups });
-    setNewCatName(""); setTempGroups([]); loadCategories();
+    try {
+      await addDoc(collection(db, "categories"), { name: newCatName, specGroups: tempGroups });
+      setNewCatName(""); 
+      setTempGroups([]); 
+      loadCategories();
+    } catch (error) {
+      alert("Error saving category");
+    }
   };
 
   const handleSaveProduct = async () => {
@@ -88,6 +104,8 @@ export default function AdminPage() {
       setProductData({ name: "", description: "", image: "", specs: {} });
       setPricing(INITIAL_PRICING);
       loadProducts(selectedCat.name);
+    } catch (error) {
+      console.error("Error saving product:", error);
     } finally {
       setLoading(false);
     }
@@ -96,7 +114,7 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-zinc-200 p-8 font-sans">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
+
         {/* LEFT COLUMN: CONFIGURATION */}
         <div className="lg:col-span-4 space-y-6">
           <section className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 backdrop-blur-sm">
@@ -104,14 +122,14 @@ export default function AdminPage() {
               <Layers className="text-blue-400 w-5 h-5" /> Create Category
             </h2>
             <input 
-              className="w-full bg-zinc-800 border-zinc-700 rounded-lg p-2.5 mb-4 focus:ring-2 focus:ring-blue-500 outline-none"
+              className="w-full bg-zinc-800 border-zinc-700 rounded-lg p-2.5 mb-4 focus:ring-2 focus:ring-blue-500 outline-none text-white"
               placeholder="e.g., Smartphones" 
               value={newCatName} onChange={e => setNewCatName(e.target.value)} 
             />
-            
+
             <div className="flex gap-2 mb-4">
               <input 
-                className="flex-1 bg-zinc-800 border-zinc-700 rounded-lg p-2 text-sm"
+                className="flex-1 bg-zinc-800 border-zinc-700 rounded-lg p-2 text-sm text-white"
                 placeholder="Group (Display, Battery...)" 
                 value={curGroupName} onChange={e => setCurGroupName(e.target.value)} 
               />
@@ -119,7 +137,7 @@ export default function AdminPage() {
                 onClick={() => { if(curGroupName) setTempGroups([...tempGroups, {groupName: curGroupName, fields: []}]); setCurGroupName(""); }}
                 className="bg-zinc-700 hover:bg-zinc-600 p-2 rounded-lg transition"
               >
-                <Plus w-4 h-4 />
+                <Plus size={16} />
               </button>
             </div>
 
@@ -129,11 +147,12 @@ export default function AdminPage() {
                   <p className="text-xs font-bold uppercase text-zinc-500 mb-2">{g.groupName}</p>
                   <div className="flex gap-2">
                     <input 
-                      className="flex-1 bg-zinc-900 border-zinc-700 rounded p-1.5 text-xs"
+                      className="flex-1 bg-zinc-900 border-zinc-700 rounded p-1.5 text-xs text-white"
                       placeholder="Add Field"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           const val = (e.target as HTMLInputElement).value;
+                          if (!val) return;
                           const updated = [...tempGroups];
                           updated[i].fields.push(val);
                           setTempGroups(updated);
@@ -143,12 +162,16 @@ export default function AdminPage() {
                     />
                   </div>
                   <div className="flex flex-wrap gap-1 mt-2">
-                    {g.fields.map((f, idx) => <span key={idx} className="bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded text-[10px]">{f}</span>)}
+                    {g.fields.map((f, idx) => (
+                      <span key={idx} className="bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded text-[10px] border border-blue-500/20">
+                        {f}
+                      </span>
+                    ))}
                   </div>
                 </div>
               ))}
             </div>
-            
+
             <button 
               onClick={handleSaveCategory}
               className="w-full bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-xl font-medium flex items-center justify-center gap-2 transition"
@@ -187,19 +210,19 @@ export default function AdminPage() {
                 <div className="space-y-4">
                   <label className="block text-sm font-medium text-zinc-400">Basic Info</label>
                   <input 
-                    className="w-full bg-zinc-800 border-zinc-700 rounded-lg p-3 outline-none" 
+                    className="w-full bg-zinc-800 border-zinc-700 rounded-lg p-3 outline-none text-white focus:border-blue-500" 
                     placeholder="Product Name" 
                     value={productData.name}
                     onChange={e => setProductData({...productData, name: e.target.value})}
                   />
                   <textarea 
-                    className="w-full bg-zinc-800 border-zinc-700 rounded-lg p-3 outline-none h-32" 
+                    className="w-full bg-zinc-800 border-zinc-700 rounded-lg p-3 outline-none h-32 text-white focus:border-blue-500" 
                     placeholder="Description" 
                     value={productData.description}
                     onChange={e => setProductData({...productData, description: e.target.value})}
                   />
                   <input 
-                    className="w-full bg-zinc-800 border-zinc-700 rounded-lg p-3 outline-none" 
+                    className="w-full bg-zinc-800 border-zinc-700 rounded-lg p-3 outline-none text-white focus:border-blue-500" 
                     placeholder="Image URL" 
                     value={productData.image}
                     onChange={e => setProductData({...productData, image: e.target.value})}
@@ -220,7 +243,7 @@ export default function AdminPage() {
                         <span className="w-20 text-sm capitalize">{site}</span>
                         <input 
                           disabled={!pricing[site].enabled}
-                          className="flex-1 bg-zinc-900 border-zinc-700 rounded p-1.5 text-xs disabled:opacity-30"
+                          className="flex-1 bg-zinc-900 border-zinc-700 rounded p-1.5 text-xs disabled:opacity-30 text-white"
                           placeholder="Price"
                           value={pricing[site].price}
                           onChange={e => setPricing({...pricing, [site]: {...pricing[site], price: e.target.value}})}
@@ -242,7 +265,7 @@ export default function AdminPage() {
                         <div key={idx} className="flex items-center gap-2">
                           <span className="text-xs text-zinc-500 w-24 truncate">{field}</span>
                           <input 
-                            className="flex-1 bg-zinc-800 border-zinc-700 rounded p-2 text-sm"
+                            className="flex-1 bg-zinc-800 border-zinc-700 rounded p-2 text-sm text-white"
                             placeholder="Value"
                             value={productData.specs[field] || ""}
                             onChange={e => setProductData({
@@ -277,8 +300,12 @@ export default function AdminPage() {
             {products.map(p => (
               <div key={p.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex items-center justify-between group">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-zinc-800 rounded-lg overflow-hidden">
-                    {p.image && <img src={p.image} alt="" className="w-full h-full object-cover" />}
+                  <div className="w-12 h-12 bg-zinc-800 rounded-lg overflow-hidden border border-zinc-700">
+                    {p.image ? (
+                      <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center"><Package size={16} /></div>
+                    )}
                   </div>
                   <div>
                     <h4 className="font-medium">{p.name}</h4>
