@@ -90,6 +90,76 @@ const [bulkProductInput, setBulkProductInput] = useState("");
     );
   };
 
+
+
+const handlePasteProduct = async () => {
+  if (!selectedCat) return alert("Select category first");
+
+  if (!bulkProductInput) return alert("Paste product JSON");
+
+  try {
+    let clean = bulkProductInput.trim();
+
+    // support JS input
+    if (clean.startsWith("const")) {
+      clean = clean
+        .replace(/const\s+\w+\s*=\s*/, "")
+        .replace(/;$/, "");
+    }
+
+    const parsed = JSON.parse(clean);
+
+    // 🔥 normalize specs (ensure all fields exist)
+    const normalizedSpecs: Record<string, string> = {};
+
+    selectedCat.specGroups.forEach(group => {
+      group.fields.forEach(field => {
+        normalizedSpecs[field] = parsed.specs?.[field] || "";
+      });
+    });
+
+    // 🔥 normalize pricing
+    const normalizedPricing: Pricing = {
+      amazon: { enabled: false, price: "", link: "" },
+      flipkart: { enabled: false, price: "", link: "" },
+      meesho: { enabled: false, price: "", link: "" },
+      myntra: { enabled: false, price: "", link: "" },
+    };
+
+    if (parsed.pricing) {
+      Object.keys(normalizedPricing).forEach((key) => {
+        if (parsed.pricing[key]) {
+          normalizedPricing[key as keyof Pricing] = {
+            enabled: true,
+            price: parsed.pricing[key].price || "",
+            link: parsed.pricing[key].link || "",
+          };
+        }
+      });
+    }
+
+    await addDoc(collection(db, "products"), {
+      name: parsed.name || "",
+      description: parsed.description || "",
+      image: parsed.image || "",
+      category: selectedCat.name,
+      specs: normalizedSpecs,
+      pricing: normalizedPricing,
+      createdAt: serverTimestamp(),
+    });
+
+    setBulkProductInput("");
+    loadProducts(selectedCat.name);
+
+    alert("✅ Product created from JSON!");
+  } catch (err) {
+    console.error(err);
+    alert("❌ Invalid product JSON");
+  }
+};
+
+
+
   const loadProducts = async (catName: string) => {
     setLoading(true);
     const q = query(
