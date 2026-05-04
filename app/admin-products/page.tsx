@@ -27,6 +27,10 @@ type PricingItem = {
   link?: string;
 };
 
+type PricingKey = "amazon" | "flipkart" | "meesho" | "myntra";
+
+type Pricing = Record<PricingKey, PricingItem>;
+
 type Product = {
   id: string;
   name: string;
@@ -34,7 +38,16 @@ type Product = {
   image: string;
   category: string;
   specs: Record<string, string>;
-  pricing: Record<string, PricingItem>;
+  pricing: Partial<Pricing>;
+};
+
+/* ================= DEFAULT ================= */
+
+const defaultPricing: Pricing = {
+  amazon: { enabled: false, price: "", link: "" },
+  flipkart: { enabled: false, price: "", link: "" },
+  meesho: { enabled: false, price: "", link: "" },
+  myntra: { enabled: false, price: "", link: "" },
 };
 
 /* ================= COMPONENT ================= */
@@ -58,14 +71,7 @@ export default function AdminPage() {
     specs: {} as Record<string, string>,
   });
 
-  const defaultPricing = {
-    amazon: { enabled: false, price: "", link: "" },
-    flipkart: { enabled: false, price: "", link: "" },
-    meesho: { enabled: false, price: "", link: "" },
-    myntra: { enabled: false, price: "", link: "" },
-  };
-
-  const [pricing, setPricing] = useState<Record<string, PricingItem>>(defaultPricing);
+  const [pricing, setPricing] = useState<Pricing>(defaultPricing);
 
   /* ================= LOAD ================= */
 
@@ -156,9 +162,9 @@ export default function AdminPage() {
     if (!selectedCat) return;
     if (!productData.name) return alert("Product name required");
 
-    // only keep enabled pricing
-    const filteredPricing: Record<string, PricingItem> = {};
-    Object.keys(pricing).forEach((key) => {
+    const filteredPricing: Partial<Pricing> = {};
+
+    (Object.keys(pricing) as PricingKey[]).forEach((key) => {
       if (pricing[key].enabled) {
         filteredPricing[key] = pricing[key];
       }
@@ -196,10 +202,14 @@ export default function AdminPage() {
       specs: p.specs || {},
     });
 
-    // merge with default (important fix)
-    const merged = { ...defaultPricing };
-    Object.keys(p.pricing || {}).forEach((k) => {
-      merged[k] = { ...p.pricing[k], enabled: true };
+    // ✅ FIXED MERGE (NO ERROR)
+    const merged: Pricing = { ...defaultPricing };
+
+    (Object.keys(p.pricing || {}) as PricingKey[]).forEach((k) => {
+      const item = p.pricing?.[k];
+      if (item) {
+        merged[k] = { ...item, enabled: true };
+      }
     });
 
     setPricing(merged);
@@ -217,9 +227,9 @@ export default function AdminPage() {
     <div className="min-h-screen bg-[#0a0a0a] text-gray-100 p-8">
       <main className="grid lg:grid-cols-12 gap-8">
 
-        {/* LEFT SIDE (unchanged) */}
+        {/* LEFT SIDE (UNCHANGED) */}
         <div className="lg:col-span-4">
-          {/* KEEP YOUR EXISTING CATEGORY UI HERE (UNCHANGED) */}
+          {/* KEEP YOUR EXISTING CATEGORY UI */}
         </div>
 
         {/* RIGHT SIDE */}
@@ -231,12 +241,10 @@ export default function AdminPage() {
 
               {/* PRODUCT FORM */}
               <div className="bg-[#111] p-6 rounded-2xl mb-6">
-
                 <h2 className="text-green-400 mb-4">
                   {editingProductId ? "Edit Product" : "Add Product"}
                 </h2>
 
-                {/* BASIC */}
                 <input
                   placeholder="Product Name"
                   value={productData.name}
@@ -247,13 +255,12 @@ export default function AdminPage() {
 
                 {/* PRICING */}
                 <div className="mt-6 space-y-3">
-                  {Object.keys(pricing).map((site) => {
+                  {(Object.keys(pricing) as PricingKey[]).map((site) => {
                     const item = pricing[site];
 
                     return (
                       <div key={site} className="flex items-center gap-2">
 
-                        {/* ✅ CHECKBOX */}
                         <input
                           type="checkbox"
                           checked={item.enabled}
@@ -301,7 +308,7 @@ export default function AdminPage() {
                 <button onClick={saveProduct}>Save</button>
               </div>
 
-              {/* PRODUCT LIST (unchanged) */}
+              {/* PRODUCT LIST */}
               {products.map((p) => (
                 <div key={p.id}>
                   {p.name}
