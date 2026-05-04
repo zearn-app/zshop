@@ -5,7 +5,13 @@ import { doc, getDoc } from "firebase/firestore";
 import { useParams, useRouter } from "next/navigation";
 import { db } from "@/lib/firebase";
 
-/* ========= TYPE ========= */
+/* ========= TYPE  ========= */
+
+type PricingItem = {
+  enabled?: boolean;
+  price?: string;
+  link?: string;
+};
 
 type Product = {
   id: string;
@@ -14,43 +20,55 @@ type Product = {
   image: string;
   category: string;
   specs: Record<string, string>;
-  pricing: Record<
-    string,
-    {
-      price?: string;
-      link?: string;
-    }
-  >;
+  pricing: Record<string, PricingItem>;
 };
 
 /* ========= COMPONENT ========= */
 
 const ProductPage = () => {
   const params = useParams();
-  const id = params?.id as string;
-
   const router = useRouter();
+
   const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // ✅ safer id handling
+  const id =
+    typeof params?.id === "string"
+      ? params.id
+      : Array.isArray(params?.id)
+      ? params.id[0]
+      : null;
 
   useEffect(() => {
     const fetchProduct = async () => {
       if (!id) return;
 
-      const ref = doc(db, "products", id);
-      const snap = await getDoc(ref);
+      try {
+        const ref = doc(db, "products", id);
+        const snap = await getDoc(ref);
 
-      if (snap.exists()) {
-        setProduct({
-          id: snap.id,
-          ...(snap.data() as Omit<Product, "id">),
-        });
+        if (snap.exists()) {
+          setProduct({
+            id: snap.id,
+            ...(snap.data() as Omit<Product, "id">),
+          });
+        } else {
+          setProduct(null);
+        }
+      } catch (err) {
+        console.error("Error fetching product:", err);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchProduct();
   }, [id]);
 
-  if (!product) {
+  /* ========= LOADING ========= */
+
+  if (loading) {
     return (
       <div className="text-center mt-10 text-white">
         Loading...
@@ -58,20 +76,33 @@ const ProductPage = () => {
     );
   }
 
-  /* 🔥 Get best price (example: Amazon first) */
+  if (!product) {
+    return (
+      <div className="text-center mt-10 text-red-400">
+        Product not found
+      </div>
+    );
+  }
+
+  /* ========= BEST PRICE LOGIC (FIXED) ========= */
+
+  const platforms = ["amazon", "flipkart", "meesho", "myntra"];
+
+  const validPlatform = platforms.find(
+    (p) =>
+      product.pricing?.[p]?.enabled &&
+      product.pricing?.[p]?.price
+  );
+
   const price =
-    product.pricing?.amazon?.price ||
-    product.pricing?.flipkart?.price ||
-    product.pricing?.meesho?.price ||
-    product.pricing?.myntra?.price ||
+    (validPlatform && product.pricing[validPlatform]?.price) ||
     "N/A";
 
   const buyLink =
-    product.pricing?.amazon?.link ||
-    product.pricing?.flipkart?.link ||
-    product.pricing?.meesho?.link ||
-    product.pricing?.myntra?.link ||
+    (validPlatform && product.pricing[validPlatform]?.link) ||
     "#";
+
+  /* ========= UI ========= */
 
   return (
     <div className="min-h-screen bg-black text-white p-8">
@@ -85,28 +116,39 @@ const ProductPage = () => {
 
       <div className="max-w-4xl mx-auto bg-gray-900 p-6 rounded-xl">
 
-        <div className="h-64 bg-gray-800 rounded mb-6 flex items-center justify-center">
+        {/* IMAGE */}
+        <div className="h-64 bg-gray-800 rounded mb-6 flex items-center justify-center overflow-hidden">
           {product.image ? (
             <img
               src={product.image}
               className="h-full object-cover rounded"
               alt={product.name}
+              onError={(e) => {
+                (e.target as HTMLImageElement).src =
+                  "https://via.placeholder.com/300x200?text=No+Image";
+              }}
             />
           ) : (
             <span>No Image</span>
           )}
         </div>
 
+        {/* INFO */}
         <h1 className="text-3xl font-bold">{product.name}</h1>
         <p className="text-gray-400 mt-2">{product.description}</p>
 
+        {/* PRICE */}
         <p className="text-yellow-400 text-2xl font-bold mt-4">
           ₹{price}
         </p>
 
+        {/* BUY */}
         <a href={buyLink} target="_blank">
-          <button className="mt-6 w-full bg-yellow-400 text-black py-3 rounded-lg hover:bg-yellow-300">
-            Buy Now
+          <button
+            disabled={buyLink === "#"}
+            className="mt-6 w-full bg-yellow-400 text-black py-3 rounded-lg hover:bg-yellow-300 disabled:bg-gray-600"
+          >
+            {buyLink === "#" ? "Not Available" : "Buy Now"}
           </button>
         </a>
       </div>

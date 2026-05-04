@@ -1,59 +1,110 @@
-import React from "react";
+"use client";
+
 import { useRouter, usePathname } from "next/navigation";
+import { useMemo } from "react";
+
+/* ================= ROUTE TYPES ================= */
+
+type Routes = {
+  LANDING: string;
+  LOGIN: string;
+  REGISTER: string;
+  HOME: string;
+  DASHBOARD: string;
+  ADMIN: string;
+  ADMIN_PRODUCT: string;
+  PRODUCT: (id: string) => string;
+};
+
+/* ================= HOOK ================= */
 
 export const useApp = () => {
   const router = useRouter();
   const pathname = usePathname();
 
-  const routes = {
-    LANDING: "/",
-    LOGIN: "/login",
-    REGISTER: "/register",
-    HOME: "/home",
-    DASHBOARD: "/dashboard",
+  /* ================= ROUTES ================= */
 
-    ADMIN: "/admin",
-    ADMIN_PRODUCT: "/admin-product",
+  const routes: Routes = useMemo(
+    () => ({
+      LANDING: "/",
+      LOGIN: "/login",
+      REGISTER: "/register",
+      HOME: "/home",
+      DASHBOARD: "/dashboard",
 
-    PRODUCT: (id: string) => `/product/${id}`, // 🔥 dynamic route
+      ADMIN: "/admin",
+      ADMIN_PRODUCT: "/admin-product",
+
+      PRODUCT: (id: string) => `/product/${id}`,
+    }),
+    []
+  );
+
+  /* ================= NAVIGATION ================= */
+
+  const goTo = (path: string) => router.push(path);
+  const replaceTo = (path: string) => router.replace(path);
+
+  const goToHome = (query?: Record<string, string>) => {
+    if (!query) return router.push(routes.HOME);
+
+    const queryString = new URLSearchParams(query).toString();
+    router.push(`${routes.HOME}?${queryString}`);
   };
+
+  const goToProduct = (id: string) => {
+    if (!id) return console.warn("Product ID missing");
+    router.push(routes.PRODUCT(id));
+  };
+
+  /* ================= ROUTE CHECKS ================= */
+
+  const isActive = (path: string) => pathname === path;
+
+  const isStartsWith = (path: string) => pathname.startsWith(path);
+
+  const routeState = useMemo(
+    () => ({
+      isLanding: isActive(routes.LANDING),
+      isLogin: isActive(routes.LOGIN),
+      isRegister: isActive(routes.REGISTER),
+      isHome: isActive(routes.HOME),
+      isDashboard: isActive(routes.DASHBOARD),
+
+      isAdmin: isStartsWith(routes.ADMIN),
+
+      // 🔥 Dynamic route check
+      isProduct: pathname.startsWith("/product"),
+    }),
+    [pathname, routes]
+  );
+
+  /* ================= RETURN ================= */
 
   return {
     pathname,
     routes,
 
-    // 🔁 Navigation
-    goToLanding: () => router.push(routes.LANDING),
-    goToLogin: () => router.push(routes.LOGIN),
-    goToRegister: () => router.push(routes.REGISTER),
+    /* Navigation */
+    goToLanding: () => goTo(routes.LANDING),
+    goToLogin: () => goTo(routes.LOGIN),
+    goToRegister: () => goTo(routes.REGISTER),
+    goToHome,
+    goToDashboard: () => goTo(routes.DASHBOARD),
 
-    goToHome: (query: string = "") => {
-      router.push(routes.HOME + query);
-    },
+    goToAdmin: () => goTo(routes.ADMIN),
+    goToAdminProduct: () => goTo(routes.ADMIN_PRODUCT),
 
-    goToDashboard: () => router.push(routes.DASHBOARD),
+    goToProduct,
 
-    // 🔥 Admin
-    goToAdmin: () => router.push(routes.ADMIN),
-    goToAdminProduct: () => router.push(routes.ADMIN_PRODUCT),
+    replaceToHome: () => replaceTo(routes.HOME),
 
-    // 🔥 Product navigation
-    goToProduct: (id: string) => {
-      router.push(routes.PRODUCT(id));
-    },
-
-    // 🔄 Replace
-    replaceToHome: () => router.replace(routes.HOME),
-
-    // 🔙 Back
     goBack: () => router.back(),
 
-    // ✅ Route checks
-    isLanding: pathname === routes.LANDING,
-    isLogin: pathname === routes.LOGIN,
-    isRegister: pathname === routes.REGISTER,
-    isHome: pathname === routes.HOME,
-    isDashboard: pathname === routes.DASHBOARD,
-    isAdmin: pathname === routes.ADMIN,
+    /* Route helpers */
+    isActive,
+    isStartsWith,
+
+    ...routeState,
   };
 };
