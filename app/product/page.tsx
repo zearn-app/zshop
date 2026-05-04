@@ -5,7 +5,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { useParams, useRouter } from "next/navigation";
 import { db } from "@/lib/firebase";
 
-/* ========= TYPE ========= */
+/* ========= TYPE  ========= */
 
 type PricingItem = {
   enabled?: boolean;
