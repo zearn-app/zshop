@@ -51,6 +51,9 @@ const ProductPage = () => {
   const [category, setCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // ✅ NEW: active tab state
+  const [activeTab, setActiveTab] = useState(0);
+
   const id =
     typeof params?.id === "string"
       ? params.id
@@ -88,10 +91,17 @@ const ProductPage = () => {
         const catSnap = await getDocs(q);
 
         if (!catSnap.empty) {
-          setCategory({
+          const catData = {
             id: catSnap.docs[0].id,
             ...(catSnap.docs[0].data() as Omit<Category, "id">),
-          });
+          };
+
+          setCategory(catData);
+
+          // ✅ set default tab
+          if (catData.specGroups?.length > 0) {
+            setActiveTab(0);
+          }
         } else {
           setCategory(null);
         }
@@ -228,7 +238,7 @@ const ProductPage = () => {
           </div>
         </div>
 
-        {/* 🔥 SPECS */}
+        {/* 🔥 SPECS WITH TABS */}
         {category && (
           <div className="bg-gray-900 p-6 rounded-xl">
 
@@ -236,34 +246,41 @@ const ProductPage = () => {
               Specifications
             </h2>
 
-            {/* ✅ Horizontal scroll fixed */}
-            <div className="flex gap-4 overflow-x-auto pb-2">
-
+            {/* ✅ TAB HEADERS */}
+            <div className="flex gap-3 overflow-x-auto mb-4">
               {category.specGroups.map((group, i) => (
-                <div
+                <button
                   key={i}
-                  className="min-w-[260px] bg-gray-800 p-4 rounded-lg flex-shrink-0"
+                  onClick={() => setActiveTab(i)}
+                  className={`px-4 py-2 rounded-lg whitespace-nowrap ${
+                    activeTab === i
+                      ? "bg-yellow-400 text-black"
+                      : "bg-gray-800 text-white"
+                  }`}
                 >
-                  <h3 className="text-yellow-400 font-semibold mb-3">
-                    {group.groupName}
-                  </h3>
-
-                  <div className="space-y-2">
-                    {group.fields.map((field, idx) => (
-                      <div key={idx} className="text-sm">
-                        <span className="text-gray-400">
-                          {field}:
-                        </span>{" "}
-                        <span className="text-white">
-                          {product.specs?.[field] || "-"}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                  {group.groupName}
+                </button>
               ))}
-
             </div>
+
+            {/* ✅ TAB CONTENT */}
+            {category.specGroups[activeTab] && (
+              <div className="bg-gray-800 p-4 rounded-lg">
+                <div className="space-y-2">
+                  {category.specGroups[activeTab].fields.map((field, idx) => (
+                    <div key={idx} className="text-sm">
+                      <span className="text-gray-400">
+                        {field}:
+                      </span>{" "}
+                      <span className="text-white">
+                        {product.specs?.[field] || "-"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
           </div>
         )}
 
