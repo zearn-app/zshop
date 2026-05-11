@@ -11,6 +11,7 @@ import {
 } from "firebase/firestore";
 import { useParams, useRouter } from "next/navigation";
 import { db } from "@/lib/firebase";
+import { motion, AnimatePresence } from "framer-motion";
 
 /* ========= TYPES ========= */
 
@@ -41,6 +42,22 @@ type Product = {
   pricing: Record<string, PricingItem>;
 };
 
+/* ========= ANIMATION VARIANTS ========= */
+
+const fadeIn = {
+  hidden: { opacity: 0, y: 30 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+};
+
+const stagger = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.08,
+    },
+  },
+};
+
 /* ========= COMPONENT ========= */
 
 const ProductPage = () => {
@@ -50,8 +67,6 @@ const ProductPage = () => {
   const [product, setProduct] = useState<Product | null>(null);
   const [category, setCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(true);
-
-  // ✅ NEW: active tab state
   const [activeTab, setActiveTab] = useState(0);
 
   const id =
@@ -66,7 +81,6 @@ const ProductPage = () => {
       if (!id) return;
 
       try {
-        /* 🔹 FETCH PRODUCT */
         const productRef = doc(db, "products", id);
         const productSnap = await getDoc(productRef);
 
@@ -82,7 +96,6 @@ const ProductPage = () => {
 
         setProduct(prod);
 
-        /* 🔹 FETCH CATEGORY */
         const q = query(
           collection(db, "categories"),
           where("name", "==", prod.category)
@@ -97,13 +110,9 @@ const ProductPage = () => {
           };
 
           setCategory(catData);
-
-          // ✅ set default tab
           if (catData.specGroups?.length > 0) {
             setActiveTab(0);
           }
-        } else {
-          setCategory(null);
         }
       } catch (err) {
         console.error("FETCH ERROR:", err);
@@ -118,7 +127,11 @@ const ProductPage = () => {
   /* ========= LOADING ========= */
 
   if (loading) {
-    return <div className="text-center mt-10 text-white">Loading...</div>;
+    return (
+      <div className="text-center mt-10 text-white animate-pulse">
+        Loading...
+      </div>
+    );
   }
 
   if (!product) {
@@ -150,27 +163,41 @@ const ProductPage = () => {
   /* ========= UI ========= */
 
   return (
-    <div className="min-h-screen bg-black text-white p-4 md:p-8">
-
+    <motion.div
+      initial="hidden"
+      animate="show"
+      variants={stagger}
+      className="min-h-screen bg-black text-white p-4 md:p-8"
+    >
       {/* BACK */}
-      <button
+      <motion.button
+        whileTap={{ scale: 0.9 }}
+        whileHover={{ scale: 1.05 }}
         onClick={() => router.back()}
         className="mb-6 bg-gray-800 px-4 py-2 rounded"
       >
         ← Back
-      </button>
+      </motion.button>
 
       <div className="max-w-5xl mx-auto space-y-6">
 
         {/* 🔥 TOP CARD */}
-        <div className="bg-gray-900 p-6 rounded-xl">
-
-          <div className="h-64 bg-gray-800 rounded mb-6 flex items-center justify-center overflow-hidden">
+        <motion.div
+          variants={fadeIn}
+          whileHover={{ scale: 1.01 }}
+          className="bg-gray-900 p-6 rounded-xl"
+        >
+          <motion.div
+            className="h-64 bg-gray-800 rounded mb-6 flex items-center justify-center overflow-hidden"
+            whileHover={{ scale: 1.05 }}
+          >
             {product.image ? (
-              <img
+              <motion.img
                 src={product.image}
                 className="h-full object-cover rounded"
                 alt={product.name}
+                whileHover={{ scale: 1.1 }}
+                transition={{ duration: 0.4 }}
                 onError={(e) => {
                   (e.target as HTMLImageElement).src =
                     "https://via.placeholder.com/300x200";
@@ -179,42 +206,49 @@ const ProductPage = () => {
             ) : (
               <span>No Image</span>
             )}
-          </div>
+          </motion.div>
 
           <h1 className="text-3xl font-bold">{product.name}</h1>
           <p className="text-gray-400 mt-2">
             {product.description || "No description"}
           </p>
 
-          <p className="text-yellow-400 text-2xl font-bold mt-4">
+          <motion.p
+            className="text-yellow-400 text-2xl font-bold mt-4"
+            initial={{ scale: 0.8 }}
+            animate={{ scale: 1 }}
+          >
             ₹{price}
-          </p>
+          </motion.p>
 
           <a href={buyLink} target="_blank">
-            <button
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.05 }}
               disabled={buyLink === "#"}
               className="mt-6 w-full bg-yellow-400 text-black py-3 rounded-lg hover:bg-yellow-300 disabled:bg-gray-600"
             >
               {buyLink === "#" ? "Not Available" : "Buy Now"}
-            </button>
+            </motion.button>
           </a>
-        </div>
+        </motion.div>
 
         {/* 🔥 PRICE COMPARISON */}
-        <div className="bg-gray-900 p-6 rounded-xl">
+        <motion.div variants={fadeIn} className="bg-gray-900 p-6 rounded-xl">
           <h2 className="text-xl text-purple-400 mb-4">
             Price Comparison
           </h2>
 
-          <div className="space-y-3">
+          <motion.div variants={stagger} className="space-y-3">
             {platforms.map((platform) => {
               const data = product.pricing?.[platform];
-
               if (!data?.enabled) return null;
 
               return (
-                <div
+                <motion.div
                   key={platform}
+                  variants={fadeIn}
+                  whileHover={{ scale: 1.02 }}
                   className="flex justify-between items-center bg-gray-800 p-3 rounded"
                 >
                   <span className="capitalize">{platform}</span>
@@ -226,31 +260,36 @@ const ProductPage = () => {
 
                     {data.link && (
                       <a href={data.link} target="_blank">
-                        <button className="bg-yellow-400 text-black px-3 py-1 rounded">
+                        <motion.button
+                          whileTap={{ scale: 0.9 }}
+                          whileHover={{ scale: 1.1 }}
+                          className="bg-yellow-400 text-black px-3 py-1 rounded"
+                        >
                           Buy
-                        </button>
+                        </motion.button>
                       </a>
                     )}
                   </div>
-                </div>
+                </motion.div>
               );
             })}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
-        {/* 🔥 SPECS WITH TABS */}
+        {/* 🔥 SPECS */}
         {category && (
-          <div className="bg-gray-900 p-6 rounded-xl">
-
+          <motion.div variants={fadeIn} className="bg-gray-900 p-6 rounded-xl">
             <h2 className="text-xl font-semibold mb-4 text-blue-400">
               Specifications
             </h2>
 
-            {/* ✅ TAB HEADERS */}
+            {/* TABS */}
             <div className="flex gap-3 overflow-x-auto mb-4">
               {category.specGroups.map((group, i) => (
-                <button
+                <motion.button
                   key={i}
+                  whileTap={{ scale: 0.9 }}
+                  whileHover={{ scale: 1.05 }}
                   onClick={() => setActiveTab(i)}
                   className={`px-4 py-2 rounded-lg whitespace-nowrap ${
                     activeTab === i
@@ -259,33 +298,51 @@ const ProductPage = () => {
                   }`}
                 >
                   {group.groupName}
-                </button>
+                </motion.button>
               ))}
             </div>
 
-            {/* ✅ TAB CONTENT */}
-            {category.specGroups[activeTab] && (
-              <div className="bg-gray-800 p-4 rounded-lg">
-                <div className="space-y-2">
-                  {category.specGroups[activeTab].fields.map((field, idx) => (
-                    <div key={idx} className="text-sm">
-                      <span className="text-gray-400">
-                        {field}:
-                      </span>{" "}
-                      <span className="text-white">
-                        {product.specs?.[field] || "-"}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-          </div>
+            {/* TAB CONTENT ANIMATION */}
+            <AnimatePresence mode="wait">
+              {category.specGroups[activeTab] && (
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, x: 40 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -40 }}
+                  transition={{ duration: 0.3 }}
+                  className="bg-gray-800 p-4 rounded-lg"
+                >
+                  <motion.div
+                    variants={stagger}
+                    initial="hidden"
+                    animate="show"
+                    className="space-y-2"
+                  >
+                    {category.specGroups[activeTab].fields.map(
+                      (field, idx) => (
+                        <motion.div
+                          key={idx}
+                          variants={fadeIn}
+                          className="text-sm"
+                        >
+                          <span className="text-gray-400">
+                            {field}:
+                          </span>{" "}
+                          <span className="text-white">
+                            {product.specs?.[field] || "-"}
+                          </span>
+                        </motion.div>
+                      )
+                    )}
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
         )}
-
       </div>
-    </div>
+    </motion.div>
   );
 };
 
