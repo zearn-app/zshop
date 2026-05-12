@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { signOut } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { useRouter } from "next/navigation";
+import { onAuthStateChanged } from "firebase/auth";
 
 /* ========= TYPES ========= */
 
@@ -42,14 +42,17 @@ const DashboardPage: React.FC = () => {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("default");
   const [cartCount, setCartCount] = useState(0);
+  const [user, setUser] = useState<any>(null);
 
-  /* ================= LOGOUT ================= */
+  /* ================= AUTH CHECK ================= */
 
-  const handleLogout = async () => {
-    await signOut(auth);
-    alert("Logged out");
-    router.push("/login"); // ✅ FIXED
-  };
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+    });
+
+    return () => unsub();
+  }, []);
 
   /* ================= FETCH PRODUCTS ================= */
 
@@ -99,6 +102,11 @@ const DashboardPage: React.FC = () => {
   /* ================= ADD TO CART ================= */
 
   const addToCart = (product: Product) => {
+    if (!user) {
+      router.push(`/login?productId=${product.id}`);
+      return;
+    }
+
     const cart = getCart();
 
     const index = cart.findIndex((item) => item.id === product.id);
@@ -110,6 +118,17 @@ const DashboardPage: React.FC = () => {
     setCartCount(cart.reduce((sum, item) => sum + item.qty, 0));
   };
 
+  /* ================= CART CLICK ================= */
+
+  const handleCartClick = () => {
+    if (!user) {
+      router.push("/login?redirect=cart");
+      return;
+    }
+
+    router.push("/cart");
+  };
+
   /* ================= UI ================= */
 
   return (
@@ -119,12 +138,26 @@ const DashboardPage: React.FC = () => {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-bold text-yellow-400">Z-Shop</h1>
 
-        <button
-          onClick={handleLogout}
-          className="bg-red-500 px-4 py-2 rounded-lg hover:bg-red-400"
-        >
-          Logout
-        </button>
+        {/* LOGIN / REGISTER (TOP RIGHT) */}
+        <div className="flex gap-3">
+          {!user && (
+            <>
+              <button
+                onClick={() => router.push("/login")}
+                className="px-4 py-2 bg-blue-500 rounded-lg hover:bg-blue-400"
+              >
+                Login
+              </button>
+
+              <button
+                onClick={() => router.push("/register")}
+                className="px-4 py-2 bg-green-500 rounded-lg hover:bg-green-400"
+              >
+                Register
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* 🔍 SEARCH + FILTER */}
@@ -193,9 +226,9 @@ const DashboardPage: React.FC = () => {
         )}
       </div>
 
-      {/* 🛒 FLOATING CART (ALWAYS FIXED) */}
+      {/* 🛒 FLOATING CART */}
       <button
-        onClick={() => router.push("/cart")}
+        onClick={handleCartClick}
         className="fixed bottom-5 left-5 z-[9999] bg-yellow-400 text-black px-5 py-3 rounded-full shadow-lg"
       >
         🛒 Cart
