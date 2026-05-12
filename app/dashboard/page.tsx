@@ -117,7 +117,7 @@ const DashboardPage: React.FC = () => {
 
       {/* 🔝 Navbar */}
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold text-yellow-400">ZShop</h1>
+        <h1 className="text-2xl font-bold text-yellow-400">Z-Shop</h1>
 
         <button
           onClick={handleLogout}
