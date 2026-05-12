@@ -20,7 +20,7 @@ type CartItem = Product & {
   qty: number;
 };
 
-/* ========= LOCAL STORAGE HELPERS ========= */
+/* ========= LOCAL STORAGE ========= */
 
 const getCart = (): CartItem[] => {
   if (typeof window === "undefined") return [];
@@ -126,21 +126,20 @@ const HomeContent = () => {
 
   return (
     <>
-      {/* 🔝 NAVBAR */}
+      {/* NAVBAR */}
       <nav className="flex justify-center items-center px-8 py-4 border-b border-gray-800">
         <h1 className="text-2xl font-bold text-yellow-400">ZShop</h1>
       </nav>
 
-      {/* 👤 PROFILE */}
+      {/* PROFILE */}
       <div
         onClick={() => router.push("/profile")}
         className="absolute top-4 left-4 w-10 h-10 rounded-full bg-yellow-400 flex items-center justify-center text-black font-bold cursor-pointer"
-        title="Profile"
       >
         U
       </div>
 
-      {/* 🎉 MESSAGE */}
+      {/* MESSAGE */}
       {message && (
         <div className="text-center mt-6">
           <p className="text-yellow-400 text-lg font-semibold">
@@ -149,14 +148,14 @@ const HomeContent = () => {
         </div>
       )}
 
-      {/* 🔍 SEARCH + FILTER */}
+      {/* SEARCH */}
       <div className="px-8 mt-6 flex gap-3">
         <input
           type="text"
           placeholder="Search products..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full p-3 rounded-lg bg-gray-900 border border-gray-700 outline-none"
+          className="w-full p-3 rounded-lg bg-gray-900 border border-gray-700"
         />
 
         <select
@@ -171,7 +170,7 @@ const HomeContent = () => {
         </select>
       </div>
 
-      {/* 🛍 PRODUCTS */}
+      {/* PRODUCTS */}
       <div className="px-8 py-10">
         <h3 className="text-2xl font-semibold text-yellow-400 mb-6">
           Products
@@ -184,17 +183,16 @@ const HomeContent = () => {
             {filtered.map((item) => (
               <div
                 key={item.id}
-                className="bg-gray-900 p-4 rounded-xl shadow hover:scale-105 transition cursor-pointer"
+                className="bg-gray-900 p-4 rounded-xl shadow hover:scale-105 transition"
               >
                 <div
                   onClick={() => router.push(`/product/${item.id}`)}
-                  className="h-40 bg-gray-800 rounded mb-4 flex items-center justify-center"
+                  className="h-40 bg-gray-800 rounded mb-4 flex items-center justify-center cursor-pointer"
                 >
                   {item.image ? (
                     <img
                       src={item.image}
                       className="h-full object-cover rounded"
-                      alt={item.name}
                     />
                   ) : (
                     <span>No Image</span>
@@ -209,7 +207,6 @@ const HomeContent = () => {
                   ₹{item.price}
                 </p>
 
-                {/* ✅ ADD TO CART */}
                 <button
                   onClick={() => addToCart(item)}
                   className="mt-3 w-full bg-yellow-400 text-black py-2 rounded-lg hover:bg-yellow-300"
@@ -222,14 +219,13 @@ const HomeContent = () => {
         )}
       </div>
 
-      {/* 🛒 CART BUTTON */}
+      {/* 🔥 FIXED CART BUTTON (FINAL FIX) */}
       <button
         onClick={() => router.push("/cart")}
-        className="fixed bottom-5 left-5 bg-yellow-400 text-black px-5 py-3 rounded-full shadow-lg hover:bg-yellow-300 relative"
+        className="fixed bottom-5 left-5 z-[9999] bg-yellow-400 text-black px-5 py-3 rounded-full shadow-lg hover:bg-yellow-300 transition-all"
       >
         🛒 Cart
 
-        {/* 🔴 COUNT BADGE */}
         {cartCount > 0 && (
           <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
             {cartCount}
@@ -240,7 +236,7 @@ const HomeContent = () => {
   );
 };
 
-/* ========= MAIN ========= */
+/* MAIN */
 
 const HomePage: React.FC = () => {
   return (
