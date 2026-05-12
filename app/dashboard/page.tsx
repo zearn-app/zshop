@@ -1,12 +1,51 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useApp } from "../app";
 import { signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
+import { collection, getDocs } from "firebase/firestore";
+import { useRouter } from "next/navigation";
+
+/* ========= TYPES ========= */
+
+type Product = {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  image?: string;
+};
+
+type CartItem = Product & {
+  qty: number;
+};
+
+/* ========= CART ========= */
+
+const getCart = (): CartItem[] => {
+  if (typeof window === "undefined") return [];
+  const data = localStorage.getItem("cart");
+  return data ? JSON.parse(data) : [];
+};
+
+const saveCart = (cart: CartItem[]) => {
+  localStorage.setItem("cart", JSON.stringify(cart));
+};
+
+/* ========= COMPONENT ========= */
 
 const DashboardPage: React.FC = () => {
   const { goToLogin } = useApp();
+  const router = useRouter();
+
+  const [products, setProducts] = useState<Product[]>([]);
+  const [filtered, setFiltered] = useState<Product[]>([]);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("default");
+  const [cartCount, setCartCount] = useState(0);
+
+  /* ========= LOGOUT ========= */
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -14,12 +53,71 @@ const DashboardPage: React.FC = () => {
     goToLogin();
   };
 
+  /* ========= FETCH PRODUCTS ========= */
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const snapshot = await getDocs(collection(db, "products"));
+
+      const data: Product[] = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as Omit<Product, "id">),
+      }));
+
+      setProducts(data);
+      setFiltered(data);
+    };
+
+    fetchProducts();
+  }, []);
+
+  /* ========= CART COUNT ========= */
+
+  useEffect(() => {
+    const cart = getCart();
+    setCartCount(cart.reduce((s, i) => s + i.qty, 0));
+  }, []);
+
+  /* ========= FILTER ========= */
+
+  useEffect(() => {
+    let result = products.filter((item) =>
+      item.name?.toLowerCase().includes(search.toLowerCase())
+    );
+
+    if (filter === "low-high") {
+      result = [...result].sort((a, b) => a.price - b.price);
+    } else if (filter === "high-low") {
+      result = [...result].sort((a, b) => b.price - a.price);
+    }
+
+    setFiltered(result);
+  }, [search, filter, products]);
+
+  /* ========= ADD TO CART ========= */
+
+  const addToCart = (product: Product) => {
+    const cart = getCart();
+
+    const index = cart.findIndex((i) => i.id === product.id);
+
+    if (index > -1) cart[index].qty += 1;
+    else cart.push({ ...product, qty: 1 });
+
+    saveCart(cart);
+    setCartCount(cart.reduce((s, i) => s + i.qty, 0));
+  };
+
+  /* ========= UI ========= */
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-gray-800 text-white p-6">
 
       {/* 🔝 Navbar */}
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold text-yellow-400">ZShop Dashboard</h1>
+        <h1 className="text-2xl font-bold text-yellow-400">
+          ZShop Dashboard
+        </h1>
 
         <button
           onClick={handleLogout}
@@ -29,87 +127,79 @@ const DashboardPage: React.FC = () => {
         </button>
       </div>
 
-      {/* 📊 Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      {/* 🔍 SEARCH + FILTER */}
+      <div className="flex gap-3 mb-6">
+        <input
+          type="text"
+          placeholder="Search products..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full p-3 rounded-lg bg-gray-900 border border-gray-700"
+        />
 
-        <div className="bg-gray-900 p-6 rounded-xl shadow">
-          <h3 className="text-gray-400">Total Orders</h3>
-          <p className="text-2xl font-bold text-yellow-400 mt-2">1,245</p>
-        </div>
-
-        <div className="bg-gray-900 p-6 rounded-xl shadow">
-          <h3 className="text-gray-400">Revenue</h3>
-          <p className="text-2xl font-bold text-green-400 mt-2">₹2,45,000</p>
-        </div>
-
-        <div className="bg-gray-900 p-6 rounded-xl shadow">
-          <h3 className="text-gray-400">Users</h3>
-          <p className="text-2xl font-bold text-blue-400 mt-2">890</p>
-        </div>
-
+        <select
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="p-3 bg-gray-900 border border-gray-700 rounded-lg"
+        >
+          <option value="default">Default</option>
+          <option value="low-high">Price Low → High</option>
+          <option value="high-low">Price High → Low</option>
+        </select>
       </div>
 
-      {/* 🛒 Products Section */}
-      <div className="bg-gray-900 p-6 rounded-xl shadow mb-8">
-        <h2 className="text-xl font-semibold text-yellow-400 mb-4">
-          Recent Products
-        </h2>
-
-        <div className="space-y-4">
-
-          <div className="flex justify-between items-center border-b border-gray-700 pb-3">
-            <div>
-              <p className="font-semibold">Wireless Headphones</p>
-              <p className="text-gray-400 text-sm">₹2,999</p>
+      {/* 🛍 PRODUCTS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-10">
+        {filtered.map((item) => (
+          <div
+            key={item.id}
+            className="bg-gray-900 p-4 rounded-xl shadow hover:scale-105 transition"
+          >
+            <div
+              onClick={() => router.push(`/product/${item.id}`)}
+              className="h-40 bg-gray-800 rounded mb-4 flex items-center justify-center cursor-pointer"
+            >
+              {item.image ? (
+                <img
+                  src={item.image}
+                  className="h-full object-cover rounded"
+                />
+              ) : (
+                <span>No Image</span>
+              )}
             </div>
-            <button className="text-yellow-400 hover:underline">
-              View
+
+            <h4 className="font-semibold">{item.name}</h4>
+            <p className="text-gray-400 text-sm">
+              {item.description || "No description"}
+            </p>
+            <p className="text-yellow-400 font-bold mt-2">
+              ₹{item.price}
+            </p>
+
+            <button
+              onClick={() => addToCart(item)}
+              className="mt-3 w-full bg-yellow-400 text-black py-2 rounded-lg hover:bg-yellow-300"
+            >
+              Add to Cart
             </button>
           </div>
-
-          <div className="flex justify-between items-center border-b border-gray-700 pb-3">
-            <div>
-              <p className="font-semibold">Smart Watch</p>
-              <p className="text-gray-400 text-sm">₹4,499</p>
-            </div>
-            <button className="text-yellow-400 hover:underline">
-              View
-            </button>
-          </div>
-
-          <div className="flex justify-between items-center">
-            <div>
-              <p className="font-semibold">Gaming Mouse</p>
-              <p className="text-gray-400 text-sm">₹1,299</p>
-            </div>
-            <button className="text-yellow-400 hover:underline">
-              View
-            </button>
-          </div>
-
-        </div>
+        ))}
       </div>
 
-      {/* ⚡ Quick Actions */}
-      <div className="bg-gray-900 p-6 rounded-xl shadow">
-        <h2 className="text-xl font-semibold text-yellow-400 mb-4">
-          Quick Actions
-        </h2>
+      {/* 🛒 FIXED CART BUTTON */}
+      <button
+        onClick={() => router.push("/cart")}
+        className="fixed bottom-5 left-5 z-[9999] bg-yellow-400 text-black px-5 py-3 rounded-full shadow-lg hover:bg-yellow-300"
+      >
+        🛒 Cart
 
-        <div className="flex flex-wrap gap-4">
-          <button className="bg-yellow-400 text-black px-4 py-2 rounded-lg hover:bg-yellow-300">
-            Add Product
-          </button>
-
-          <button className="bg-blue-500 px-4 py-2 rounded-lg hover:bg-blue-400">
-            View Orders
-          </button>
-
-          <button className="bg-green-500 px-4 py-2 rounded-lg hover:bg-green-400">
-            Manage Users
-          </button>
-        </div>
-      </div>
+        {cartCount > 0 && (
+          <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+            {cartCount}
+          </span>
+        )}
+      </button>
 
     </div>
   );
