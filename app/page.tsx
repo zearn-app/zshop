@@ -14,6 +14,7 @@ type Product = {
   description?: string;
   price: number;
   image?: string;
+  category?: string; // ✅ ADDED
 };
 
 type CartItem = Product & {
@@ -43,6 +44,8 @@ const DashboardPage: React.FC = () => {
   const [filter, setFilter] = useState("default");
   const [cartCount, setCartCount] = useState(0);
   const [user, setUser] = useState<any>(null);
+
+  const [categoryFilter, setCategoryFilter] = useState("all"); // ✅ NEW
 
   /* ================= AUTH CHECK ================= */
 
@@ -79,13 +82,28 @@ const DashboardPage: React.FC = () => {
     setCartCount(cart.reduce((sum, item) => sum + item.qty, 0));
   }, []);
 
-  /* ================= SEARCH + FILTER ================= */
+  /* ================= UNIQUE CATEGORIES ================= */
+
+  const categories = ["all", ...Array.from(new Set(products.map(p => p.category || "uncategorized")))];
+
+  /* ================= SEARCH + FILTER + CATEGORY ================= */
 
   useEffect(() => {
-    let result = products.filter((item) =>
+    let result = products;
+
+    // 🔍 category filter
+    if (categoryFilter !== "all") {
+      result = result.filter(
+        (item) => (item.category || "uncategorized") === categoryFilter
+      );
+    }
+
+    // 🔍 search filter
+    result = result.filter((item) =>
       item.name?.toLowerCase().includes(search.toLowerCase())
     );
 
+    // 🔃 sorting
     if (filter === "low-high") {
       result = [...result].sort((a, b) => a.price - b.price);
     } else if (filter === "high-low") {
@@ -97,7 +115,7 @@ const DashboardPage: React.FC = () => {
     }
 
     setFiltered(result);
-  }, [search, filter, products]);
+  }, [search, filter, products, categoryFilter]);
 
   /* ================= ADD TO CART ================= */
 
@@ -138,7 +156,7 @@ const DashboardPage: React.FC = () => {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-bold text-yellow-400">Z-Shop</h1>
 
-        {/* LOGIN / REGISTER (TOP RIGHT) */}
+        {/* LOGIN / REGISTER */}
         <div className="flex gap-3">
           {!user && (
             <>
@@ -157,6 +175,25 @@ const DashboardPage: React.FC = () => {
               </button>
             </>
           )}
+        </div>
+      </div>
+
+      {/* 📂 CATEGORY SCROLL (NEW) */}
+      <div className="mb-6">
+        <div className="max-h-28 overflow-y-auto grid grid-cols-2 gap-2 p-2 bg-gray-900 rounded-lg border border-gray-700">
+          {categories.map((cat, idx) => (
+            <button
+              key={idx}
+              onClick={() => setCategoryFilter(cat)}
+              className={`p-2 rounded text-sm ${
+                categoryFilter === cat
+                  ? "bg-yellow-400 text-black"
+                  : "bg-gray-800 hover:bg-gray-700"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
         </div>
       </div>
 
