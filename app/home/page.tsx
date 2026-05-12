@@ -6,9 +6,8 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { db } from "@/lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
 
-/**
- * 🔹 Product Type
- */
+/* ========= TYPES ========= */
+
 type Product = {
   id: string;
   name: string;
@@ -17,30 +16,46 @@ type Product = {
   image?: string;
 };
 
-/**
- * 🔹 Inner component
- */
+type CartItem = Product & {
+  qty: number;
+};
+
+/* ========= LOCAL STORAGE HELPERS ========= */
+
+const getCart = (): CartItem[] => {
+  if (typeof window === "undefined") return [];
+  const data = localStorage.getItem("cart");
+  return data ? JSON.parse(data) : [];
+};
+
+const saveCart = (cart: CartItem[]) => {
+  localStorage.setItem("cart", JSON.stringify(cart));
+};
+
+/* ========= COMPONENT ========= */
+
 const HomeContent = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
-
   const { goToLogin } = useApp();
 
   const [message, setMessage] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
   const [filtered, setFiltered] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
-
   const [filter, setFilter] = useState("default");
 
-  const user = null; // kept UI unchanged (no logout/email display)
+  const [cartCount, setCartCount] = useState(0);
 
-  /* ================= WELCOME MESSAGE ================= */
+  const user = null;
+
+  /* ================= WELCOME ================= */
 
   useEffect(() => {
     const type = searchParams.get("type");
 
-    if (type === "register") setMessage("🎉 Welcome! Please complete your profile.");
+    if (type === "register")
+      setMessage("🎉 Welcome! Please complete your profile.");
     else if (type === "login") setMessage("👋 Welcome back!");
   }, [searchParams]);
 
@@ -62,6 +77,14 @@ const HomeContent = () => {
     fetchProducts();
   }, []);
 
+  /* ================= LOAD CART COUNT ================= */
+
+  useEffect(() => {
+    const cart = getCart();
+    const total = cart.reduce((sum, item) => sum + item.qty, 0);
+    setCartCount(total);
+  }, []);
+
   /* ================= SEARCH + FILTER ================= */
 
   useEffect(() => {
@@ -69,7 +92,6 @@ const HomeContent = () => {
       item.name?.toLowerCase().includes(search.toLowerCase())
     );
 
-    // 🔽 FILTER OPTIONS
     if (filter === "low-high") {
       result = [...result].sort((a, b) => a.price - b.price);
     } else if (filter === "high-low") {
@@ -81,16 +103,35 @@ const HomeContent = () => {
     setFiltered(result);
   }, [search, products, filter]);
 
+  /* ================= ADD TO CART ================= */
+
+  const addToCart = (product: Product) => {
+    const cart = getCart();
+
+    const index = cart.findIndex((item) => item.id === product.id);
+
+    if (index > -1) {
+      cart[index].qty += 1;
+    } else {
+      cart.push({ ...product, qty: 1 });
+    }
+
+    saveCart(cart);
+
+    const total = cart.reduce((sum, item) => sum + item.qty, 0);
+    setCartCount(total);
+  };
+
   /* ================= UI ================= */
 
   return (
     <>
-      {/* 🔝 NAVBAR (NO EMAIL, NO LOGOUT) */}
+      {/* 🔝 NAVBAR */}
       <nav className="flex justify-center items-center px-8 py-4 border-b border-gray-800">
         <h1 className="text-2xl font-bold text-yellow-400">ZShop</h1>
       </nav>
 
-      {/* 👤 PROFILE CLICK AREA */}
+      {/* 👤 PROFILE */}
       <div
         onClick={() => router.push("/profile")}
         className="absolute top-4 left-4 w-10 h-10 rounded-full bg-yellow-400 flex items-center justify-center text-black font-bold cursor-pointer"
@@ -102,7 +143,9 @@ const HomeContent = () => {
       {/* 🎉 MESSAGE */}
       {message && (
         <div className="text-center mt-6">
-          <p className="text-yellow-400 text-lg font-semibold">{message}</p>
+          <p className="text-yellow-400 text-lg font-semibold">
+            {message}
+          </p>
         </div>
       )}
 
@@ -141,10 +184,12 @@ const HomeContent = () => {
             {filtered.map((item) => (
               <div
                 key={item.id}
-                onClick={() => router.push(`/product/${item.id}`)}
                 className="bg-gray-900 p-4 rounded-xl shadow hover:scale-105 transition cursor-pointer"
               >
-                <div className="h-40 bg-gray-800 rounded mb-4 flex items-center justify-center">
+                <div
+                  onClick={() => router.push(`/product/${item.id}`)}
+                  className="h-40 bg-gray-800 rounded mb-4 flex items-center justify-center"
+                >
                   {item.image ? (
                     <img
                       src={item.image}
@@ -164,8 +209,12 @@ const HomeContent = () => {
                   ₹{item.price}
                 </p>
 
-                <button className="mt-3 w-full bg-yellow-400 text-black py-2 rounded-lg hover:bg-yellow-300">
-                  Buy Now
+                {/* ✅ ADD TO CART */}
+                <button
+                  onClick={() => addToCart(item)}
+                  className="mt-3 w-full bg-yellow-400 text-black py-2 rounded-lg hover:bg-yellow-300"
+                >
+                  Add to Cart
                 </button>
               </div>
             ))}
@@ -173,20 +222,26 @@ const HomeContent = () => {
         )}
       </div>
 
-      {/* 🛒 CART BUTTON (BOTTOM LEFT FIXED) */}
+      {/* 🛒 CART BUTTON */}
       <button
         onClick={() => router.push("/cart")}
-        className="fixed bottom-5 left-5 bg-yellow-400 text-black px-5 py-3 rounded-full shadow-lg hover:bg-yellow-300"
+        className="fixed bottom-5 left-5 bg-yellow-400 text-black px-5 py-3 rounded-full shadow-lg hover:bg-yellow-300 relative"
       >
         🛒 Cart
+
+        {/* 🔴 COUNT BADGE */}
+        {cartCount > 0 && (
+          <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+            {cartCount}
+          </span>
+        )}
       </button>
     </>
   );
 };
 
-/**
- * 🔹 Main Page
- */
+/* ========= MAIN ========= */
+
 const HomePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-gray-800 text-white">
