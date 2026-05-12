@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useApp } from "../app";
 import { signOut } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
@@ -36,7 +35,6 @@ const saveCart = (cart: CartItem[]) => {
 /* ========= COMPONENT ========= */
 
 const DashboardPage: React.FC = () => {
-  const { goToLogin } = useApp();
   const router = useRouter();
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -50,7 +48,7 @@ const DashboardPage: React.FC = () => {
   const handleLogout = async () => {
     await signOut(auth);
     alert("Logged out");
-    goToLogin();
+    router.push("/login"); // ✅ FIXED
   };
 
   /* ================= FETCH PRODUCTS ================= */
@@ -90,7 +88,9 @@ const DashboardPage: React.FC = () => {
     } else if (filter === "high-low") {
       result = [...result].sort((a, b) => b.price - a.price);
     } else if (filter === "name") {
-      result = [...result].sort((a, b) => a.name.localeCompare(b.name));
+      result = [...result].sort((a, b) =>
+        a.name.localeCompare(b.name)
+      );
     }
 
     setFiltered(result);
@@ -193,7 +193,7 @@ const DashboardPage: React.FC = () => {
         )}
       </div>
 
-      {/* 🛒 FLOATING CART */}
+      {/* 🛒 FLOATING CART (ALWAYS FIXED) */}
       <button
         onClick={() => router.push("/cart")}
         className="fixed bottom-5 left-5 z-[9999] bg-yellow-400 text-black px-5 py-3 rounded-full shadow-lg"
