@@ -50,7 +50,7 @@ type CartItem = {
   qty: number;
 };
 
-/* ========= CART HELPERS ========= */
+/* ========= CART ========= */
 
 const getCart = (): CartItem[] => {
   if (typeof window === "undefined") return [];
@@ -62,7 +62,7 @@ const saveCart = (cart: CartItem[]) => {
   localStorage.setItem("cart", JSON.stringify(cart));
 };
 
-/* ========= ANIMATION VARIANTS ========= */
+/* ========= ANIMATION ========= */
 
 const fadeIn = {
   hidden: { opacity: 0, y: 30 },
@@ -72,9 +72,7 @@ const fadeIn = {
 const stagger = {
   hidden: {},
   show: {
-    transition: {
-      staggerChildren: 0.08,
-    },
+    transition: { staggerChildren: 0.08 },
   },
 };
 
@@ -88,7 +86,6 @@ const ProductPage = () => {
   const [category, setCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
-
   const [cartCount, setCartCount] = useState(0);
 
   const id =
@@ -98,13 +95,14 @@ const ProductPage = () => {
       ? params.id[0]
       : null;
 
+  /* ========= FETCH ========= */
+
   useEffect(() => {
     const fetchData = async () => {
       if (!id) return;
 
       try {
-        const productRef = doc(db, "products", id);
-        const productSnap = await getDoc(productRef);
+        const productSnap = await getDoc(doc(db, "products", id));
 
         if (!productSnap.exists()) {
           setProduct(null);
@@ -118,12 +116,12 @@ const ProductPage = () => {
 
         setProduct(prod);
 
-        const q = query(
-          collection(db, "categories"),
-          where("name", "==", prod.category)
+        const catSnap = await getDocs(
+          query(
+            collection(db, "categories"),
+            where("name", "==", prod.category)
+          )
         );
-
-        const catSnap = await getDocs(q);
 
         if (!catSnap.empty) {
           const catData = {
@@ -132,12 +130,10 @@ const ProductPage = () => {
           };
 
           setCategory(catData);
-          if (catData.specGroups?.length > 0) {
-            setActiveTab(0);
-          }
+          setActiveTab(0);
         }
       } catch (err) {
-        console.error("FETCH ERROR:", err);
+        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -146,14 +142,14 @@ const ProductPage = () => {
     fetchData();
   }, [id]);
 
-  /* 🔹 LOAD CART COUNT */
+  /* ========= CART COUNT ========= */
+
   useEffect(() => {
     const cart = getCart();
-    const total = cart.reduce((sum, item) => sum + item.qty, 0);
-    setCartCount(total);
+    setCartCount(cart.reduce((sum, i) => sum + i.qty, 0));
   }, []);
 
-  /* ========= ADD TO CART ========= */
+  /* ========= ADD CART ========= */
 
   const addToCart = () => {
     if (!product) return;
@@ -165,11 +161,10 @@ const ProductPage = () => {
         (p) => p.enabled && p.price
       )?.price || "0";
 
-    const index = cart.findIndex((item) => item.id === product.id);
+    const index = cart.findIndex((i) => i.id === product.id);
 
-    if (index > -1) {
-      cart[index].qty += 1;
-    } else {
+    if (index > -1) cart[index].qty += 1;
+    else
       cart.push({
         id: product.id,
         name: product.name,
@@ -177,51 +172,26 @@ const ProductPage = () => {
         image: product.image,
         qty: 1,
       });
-    }
 
     saveCart(cart);
-
-    const total = cart.reduce((sum, item) => sum + item.qty, 0);
-    setCartCount(total);
+    setCartCount(cart.reduce((s, i) => s + i.qty, 0));
   };
 
-  /* ========= LOADING ========= */
+  /* ========= UI ========= */
 
-  if (loading) {
-    return (
-      <div className="text-center mt-10 text-white animate-pulse">
-        Loading...
-      </div>
-    );
-  }
+  if (loading)
+    return <div className="text-center mt-10 text-white">Loading...</div>;
 
-  if (!product) {
-    return (
-      <div className="text-center mt-10 text-red-400">
-        Product not found
-      </div>
-    );
-  }
-
-  /* ========= PRICE ========= */
+  if (!product)
+    return <div className="text-center mt-10 text-red-400">Not found</div>;
 
   const platforms = Object.keys(product.pricing || {});
-
-  const validPlatforms = platforms.filter(
-    (p) =>
-      product.pricing?.[p]?.enabled &&
-      product.pricing?.[p]?.price
+  const best = platforms.find(
+    (p) => product.pricing[p]?.enabled && product.pricing[p]?.price
   );
 
-  const bestPlatform = validPlatforms[0];
-
-  const price =
-    (bestPlatform && product.pricing[bestPlatform]?.price) || "N/A";
-
-  const buyLink =
-    (bestPlatform && product.pricing[bestPlatform]?.link) || "#";
-
-  /* ========= UI ========= */
+  const price = best ? product.pricing[best].price : "N/A";
+  const buyLink = best ? product.pricing[best].link : "#";
 
   return (
     <motion.div
@@ -231,41 +201,36 @@ const ProductPage = () => {
       className="min-h-screen bg-black text-white p-4 md:p-8"
     >
       {/* BACK */}
-      <motion.button
-        whileTap={{ scale: 0.9 }}
-        whileHover={{ scale: 1.05 }}
+      <button
         onClick={() => router.back()}
         className="mb-6 bg-gray-800 px-4 py-2 rounded"
       >
         ← Back
-      </motion.button>
+      </button>
 
       <div className="max-w-5xl mx-auto space-y-6">
 
-        {/* TOP CARD */}
-        <motion.div variants={fadeIn} className="bg-gray-900 p-6 rounded-xl">
-
-          <div className="h-64 bg-gray-800 rounded mb-6 flex items-center justify-center overflow-hidden">
+        {/* TOP */}
+        <div className="bg-gray-900 p-6 rounded-xl">
+          <div className="h-64 bg-gray-800 rounded mb-6 flex items-center justify-center">
             {product.image ? (
-              <img src={product.image} className="h-full object-cover rounded" />
+              <img src={product.image} className="h-full object-cover" />
             ) : (
-              <span>No Image</span>
+              "No Image"
             )}
           </div>
 
           <h1 className="text-3xl font-bold">{product.name}</h1>
-          <p className="text-gray-400 mt-2">
-            {product.description || "No description"}
-          </p>
+          <p className="text-gray-400 mt-2">{product.description}</p>
 
           <p className="text-yellow-400 text-2xl font-bold mt-4">
             ₹{price}
           </p>
 
-          {/* ✅ ADD TO CART */}
+          {/* ADD CART */}
           <button
             onClick={addToCart}
-            className="mt-4 w-full bg-green-400 text-black py-3 rounded-lg hover:bg-green-300"
+            className="mt-4 w-full bg-green-400 text-black py-3 rounded-lg"
           >
             Add to Cart
           </button>
@@ -275,25 +240,68 @@ const ProductPage = () => {
               Buy Now
             </button>
           </a>
-        </motion.div>
+        </div>
 
-        {/* PRICE + SPECS (UNCHANGED) */}
-        {/* Keep your existing animated sections exactly same */}
+        {/* 🔥 PRICE LIST */}
+        <div className="bg-gray-900 p-6 rounded-xl">
+          <h2 className="text-purple-400 mb-3">Price Comparison</h2>
 
+          {platforms.map((p) => {
+            const d = product.pricing[p];
+            if (!d?.enabled) return null;
+
+            return (
+              <div key={p} className="flex justify-between mb-2">
+                <span>{p}</span>
+                <span>₹{d.price}</span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* 🔥 SPECS FIXED (THIS WAS MISSING) */}
+        {category && (
+          <div className="bg-gray-900 p-6 rounded-xl">
+            <h2 className="text-blue-400 mb-4">Specifications</h2>
+
+            {/* TABS */}
+            <div className="flex gap-2 mb-4 overflow-x-auto">
+              {category.specGroups.map((g, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveTab(i)}
+                  className={`px-3 py-1 rounded ${
+                    activeTab === i
+                      ? "bg-yellow-400 text-black"
+                      : "bg-gray-800"
+                  }`}
+                >
+                  {g.groupName}
+                </button>
+              ))}
+            </div>
+
+            {/* CONTENT */}
+            {category.specGroups[activeTab] && (
+              <div className="bg-gray-800 p-4 rounded">
+                {category.specGroups[activeTab].fields.map((f, i) => (
+                  <div key={i} className="text-sm mb-1">
+                    <span className="text-gray-400">{f}: </span>
+                    {product.specs?.[f] || "-"}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* 🛒 FLOATING CART BUTTON */}
+      {/* 🔥 FIXED CART BUTTON (ALWAYS SAME PLACE) */}
       <button
         onClick={() => router.push("/cart")}
-        className="fixed bottom-5 left-5 bg-yellow-400 text-black px-5 py-3 rounded-full shadow-lg relative"
+        className="fixed bottom-5 left-5 z-50 bg-yellow-400 text-black px-5 py-3 rounded-full shadow-lg"
       >
-        🛒 Cart
-
-        {cartCount > 0 && (
-          <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-            {cartCount}
-          </span>
-        )}
+        🛒 {cartCount}
       </button>
     </motion.div>
   );
