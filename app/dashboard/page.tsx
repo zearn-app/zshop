@@ -45,7 +45,7 @@ const DashboardPage: React.FC = () => {
   const [filter, setFilter] = useState("default");
   const [cartCount, setCartCount] = useState(0);
 
-  /* ========= LOGOUT ========= */
+  /* ================= LOGOUT ================= */
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -53,7 +53,7 @@ const DashboardPage: React.FC = () => {
     goToLogin();
   };
 
-  /* ========= FETCH PRODUCTS ========= */
+  /* ================= FETCH PRODUCTS ================= */
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -71,14 +71,14 @@ const DashboardPage: React.FC = () => {
     fetchProducts();
   }, []);
 
-  /* ========= CART COUNT ========= */
+  /* ================= CART COUNT ================= */
 
   useEffect(() => {
     const cart = getCart();
-    setCartCount(cart.reduce((s, i) => s + i.qty, 0));
+    setCartCount(cart.reduce((sum, item) => sum + item.qty, 0));
   }, []);
 
-  /* ========= FILTER ========= */
+  /* ================= SEARCH + FILTER ================= */
 
   useEffect(() => {
     let result = products.filter((item) =>
@@ -89,35 +89,35 @@ const DashboardPage: React.FC = () => {
       result = [...result].sort((a, b) => a.price - b.price);
     } else if (filter === "high-low") {
       result = [...result].sort((a, b) => b.price - a.price);
+    } else if (filter === "name") {
+      result = [...result].sort((a, b) => a.name.localeCompare(b.name));
     }
 
     setFiltered(result);
   }, [search, filter, products]);
 
-  /* ========= ADD TO CART ========= */
+  /* ================= ADD TO CART ================= */
 
   const addToCart = (product: Product) => {
     const cart = getCart();
 
-    const index = cart.findIndex((i) => i.id === product.id);
+    const index = cart.findIndex((item) => item.id === product.id);
 
     if (index > -1) cart[index].qty += 1;
     else cart.push({ ...product, qty: 1 });
 
     saveCart(cart);
-    setCartCount(cart.reduce((s, i) => s + i.qty, 0));
+    setCartCount(cart.reduce((sum, item) => sum + item.qty, 0));
   };
 
-  /* ========= UI ========= */
+  /* ================= UI ================= */
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-gray-800 text-white p-6">
 
       {/* 🔝 Navbar */}
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold text-yellow-400">
-          ZShop Dashboard
-        </h1>
+        <h1 className="text-2xl font-bold text-yellow-400">ZShop</h1>
 
         <button
           onClick={handleLogout}
@@ -143,54 +143,60 @@ const DashboardPage: React.FC = () => {
           className="p-3 bg-gray-900 border border-gray-700 rounded-lg"
         >
           <option value="default">Default</option>
+          <option value="name">Name A-Z</option>
           <option value="low-high">Price Low → High</option>
           <option value="high-low">Price High → Low</option>
         </select>
       </div>
 
       {/* 🛍 PRODUCTS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-10">
-        {filtered.map((item) => (
-          <div
-            key={item.id}
-            className="bg-gray-900 p-4 rounded-xl shadow hover:scale-105 transition"
-          >
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+
+        {filtered.length === 0 ? (
+          <p className="text-gray-400">No products found</p>
+        ) : (
+          filtered.map((item) => (
             <div
-              onClick={() => router.push(`/product/${item.id}`)}
-              className="h-40 bg-gray-800 rounded mb-4 flex items-center justify-center cursor-pointer"
+              key={item.id}
+              className="bg-gray-900 p-4 rounded-xl shadow hover:scale-105 transition"
             >
-              {item.image ? (
-                <img
-                  src={item.image}
-                  className="h-full object-cover rounded"
-                />
-              ) : (
-                <span>No Image</span>
-              )}
+              <div
+                onClick={() => router.push(`/product/${item.id}`)}
+                className="h-40 bg-gray-800 rounded mb-4 flex items-center justify-center cursor-pointer"
+              >
+                {item.image ? (
+                  <img
+                    src={item.image}
+                    className="h-full object-cover rounded"
+                  />
+                ) : (
+                  <span>No Image</span>
+                )}
+              </div>
+
+              <h4 className="font-semibold">{item.name}</h4>
+              <p className="text-gray-400 text-sm">
+                {item.description || "No description"}
+              </p>
+              <p className="text-yellow-400 font-bold mt-2">
+                ₹{item.price}
+              </p>
+
+              <button
+                onClick={() => addToCart(item)}
+                className="mt-3 w-full bg-yellow-400 text-black py-2 rounded-lg hover:bg-yellow-300"
+              >
+                Add to Cart
+              </button>
             </div>
-
-            <h4 className="font-semibold">{item.name}</h4>
-            <p className="text-gray-400 text-sm">
-              {item.description || "No description"}
-            </p>
-            <p className="text-yellow-400 font-bold mt-2">
-              ₹{item.price}
-            </p>
-
-            <button
-              onClick={() => addToCart(item)}
-              className="mt-3 w-full bg-yellow-400 text-black py-2 rounded-lg hover:bg-yellow-300"
-            >
-              Add to Cart
-            </button>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
-      {/* 🛒 FIXED CART BUTTON */}
+      {/* 🛒 FLOATING CART */}
       <button
         onClick={() => router.push("/cart")}
-        className="fixed bottom-5 left-5 z-[9999] bg-yellow-400 text-black px-5 py-3 rounded-full shadow-lg hover:bg-yellow-300"
+        className="fixed bottom-5 left-5 z-[9999] bg-yellow-400 text-black px-5 py-3 rounded-full shadow-lg"
       >
         🛒 Cart
 
@@ -200,7 +206,6 @@ const DashboardPage: React.FC = () => {
           </span>
         )}
       </button>
-
     </div>
   );
 };
